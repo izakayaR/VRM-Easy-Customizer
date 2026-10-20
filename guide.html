@@ -68,19 +68,12 @@ kbd{font:500 13px/1 ui-monospace,Menlo,monospace;background:var(--accbg);color:v
 .chips span{display:inline-block;background:var(--accbg);color:var(--acc);border-radius:999px;padding:1px 12px;margin:2px 4px 2px 0;font-size:14px}
 .table-wrap{overflow-x:auto}
 footer{text-align:center;color:var(--sub);font-size:13px;padding:0 20px 40px}
-
-.app-return-wrap{margin-top:22px}
-.app-return{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:11px 18px;border:1px solid var(--acc);border-radius:999px;background:var(--acc);color:#fff;text-decoration:none;font-weight:700;line-height:1.4;box-shadow:0 4px 14px color-mix(in srgb,var(--acc) 22%,transparent);transition:transform .15s ease,opacity .15s ease}
-.app-return:hover{opacity:.9;transform:translateY(-1px)}
-.app-return:focus-visible{outline:3px solid var(--acc);outline-offset:3px}
-@media(prefers-color-scheme:dark){.app-return{color:#17151d}}
 </style>
 </head>
 <body>
 <header class="top">
 <h1><span class="logo" role="img" aria-label="VRM Easy Customizer"></span><span class="h1sub">使い方ガイド</span></h1>
 <p class="lead">VRMアバターの表情・ポーズ・衣装の色・髪の動き・アクセサリー・テクスチャを、ブラウザだけで編集して書き出せるツールの全機能を、画面の並びに沿って説明します。</p>
-<p class="app-return-wrap"><a class="app-return" href="./index.html" aria-label="VRM Easy Customizerに戻る">← VRM Easy Customizerに戻る</a></p>
 </header>
 <div class="layout">
 <nav class="toc" aria-label="目次"><button class="toc-btn" type="button" aria-label="目次を開く" aria-expanded="false" aria-controls="tocList"><span></span><span></span><span></span></button><div id="tocList">
@@ -450,7 +443,7 @@ footer{text-align:center;color:var(--sub);font-size:13px;padding:0 20px 40px}
 <tr class="grp"><th colspan="2">全般</th></tr>
 <tr><td><kbd>Ctrl</kbd>＋<kbd>Z</kbd></td><td>元に戻す。開いている画面に応じて、ポーズ・アバターの位置・アクセサリー・テクスチャペイントのいずれかに効きます</td></tr>
 <tr><td><kbd>Ctrl</kbd>＋<kbd>Shift</kbd>＋<kbd>Z</kbd></td><td>やり直す</td></tr>
-
+<tr><td><kbd>F5</kbd> / <kbd>Ctrl</kbd>＋<kbd>R</kbd></td><td>ページの再読み込み。未保存の編集があると、先に保存の確認が出ます</td></tr>
 <tr><td><kbd>Enter</kbd></td><td>背景色・床の色コード欄で色を適用。「保存するアバター情報」の画面では「保存する」</td></tr>
 <tr><td><kbd>Esc</kbd></td><td>色選択メニューやダイアログを閉じる。「保存するアバター情報」の画面ではキャンセル</td></tr>
 <tr class="grp"><th colspan="2">テクスチャペイント：ツールの切り替え</th></tr>
