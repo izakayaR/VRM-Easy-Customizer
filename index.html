@@ -148,6 +148,27 @@ body:has(#paintStudio.open) .mobile-history-overlay{display:none !important;}@me
   box-sizing:border-box;
 }
 </style>
+<style id="anim-transport-image-icons">.anim-transport .at-btn.at-icon-btn{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px}.anim-transport .at-ico{display:block;width:14.4px;height:14.4px;flex:0 0 14.4px;background:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:100% 100%;mask-size:100% 100%;pointer-events:none}.anim-transport .at-ico.pause{-webkit-mask-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAQAAACTbf5ZAAAApklEQVR42u3dwQkAIAgF0Iw2av8RmqlWCCEKev+syMOLN2OWv1ILMDAwMDAw8K20naKRvU4i1ZWc1sOGgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYHfSvjGAwwMDAwMDAx8KAurggXv+TL5cwAAAABJRU5ErkJggg==");mask-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAQAAACTbf5ZAAAApklEQVR42u3dwQkAIAgF0Iw2av8RmqlWCCEKev+syMOLN2OWv1ILMDAwMDAw8K20naKRvU4i1ZWc1sOGgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYHfSvjGAwwMDAwMDAx8KAurggXv+TL5cwAAAABJRU5ErkJggg==")}.anim-transport .at-ico.play{-webkit-mask-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAQAAACTbf5ZAAAEiklEQVR42u2dMW8URxiGn9mZs6CylOKK0BMJWVSR+AEOkewuHZS4SGeqKA12EsmmACGRmAYKO5EoHPEDQAK7IkVs5UikWEiht4trAh2yd3YpdvfsFDh3u7Oz8613+9vd5+b75h0/MyerPzhbV0QH3AF3wB1wB9wG4KgdX864EJqEBI06C8AK+IQnXMaSYmRDjzvCR3zFgJ/oE5Oi2w+seIvhJq9YoIeV29Hjv7YmJeYC67zkKgmJzOKeZJwUmhTLFZ6zyWcyi3vSwlT5fH2NHX5gWl5xR6U+E2GZ5nt2uSYtrsqOTtbRF9nkOVewpFKgy5ejwpCQcJWXrNHPoVu+ls6Ku8cif7PIlISOrv562czdZ40Bc+HHlYvxKOJqhqdsMkNMimn7n4fHcTVghWniUIs7cnqvCMsUS+yyEGpcuR6FIq7W2crjKrCOdl92WVzFzPIbG1wIbQEa1XRXg8Vwg1cshRVX9b1GVtx9VkZxFURH1/m9K8worp4yk3d0i4FPxtUcA1boE6Oa7ejIyzOKuPqTBVIsurmO9vXgrKM/ZZ0tZrHNLUD9fdNFR8+yxQYXm4orv6Wl0FgSbrDbVFz57yVNRMw0Kwya8CXNTB6GlJgZNk/ElWoz8LEvmWPAmk+93+SCr4irRZ96v+kVbqYOPOr95pf0nvV+GH/DeNT74WgYT3o/LO/kQe+HJtpq1/shmsVa9X6o+wS16f1wN0Zq0vth7wTVoPfD38x2rPdl7N471PtSjis40/uSzmc40fvSTltV1vvyjpdV1Psyz9NV0PtyjwSX1Puyz0CX0PvSD31PrPfbcMr9v3q/h207cFbchd7/i68593GuNv3II8ICl/icHnysl01LYFMsBnjGN7xuf0nHKAx7XGee16dPWvJH2BJhGPKAuxwSwemTlhFeyAka+JklDgB9Oqzskk7zBeU2X7DAAQb1/7hyR9iiMRywzAbZz8ji8T4oETgBNIfc5QFDVB5HtBO46NpnfMseYIgnwZXVw0XX7jHPPHto1LiFLHGEs64dssqjceJHNnC28xDzmGX2x4sfucDZojFim1vs5DOyLX87I6KQ33BnFD+22g1N0IVcxM893pXvWhnARfz8yu1R/Di5TLCwmh2WeQEYrCvcEIEtGs2QVR5yRATuYMMDzrr2iIesMqwWP+EDF87iBcsu4if0paVFYXjDdb5kB43CktbxIBNMIb/jR+67i59QgY+dxR3+qadrwwE+jp9bbOfxY+t+qGmwazWafb7jMUf5/r6HyzTYtYc8GsVP7OvRpoFCLpR54Sw8FHJzsXRSmRfOIvX5AsZr106kzGUDl1Dmcku6pDKXOsKllblE4ErKXBpwZWUuqYedKHM5I+xImcsAdqjMwwd2rMxDB3auzEMGrkWZhwpcmzIPEbhWZR4ecM3KPCxgD8o8HGBPyjyUpaU3ZR7CCCcof8q8aeDsVwUelXmzwClTaH5nyZ8ybxa4xz73+IXYnzKv51Jj/nOac5znX7mFPPkIv+e9rPipPmkp+bCT5XAKZwuYDrgD7oA74A64A677+gA4lAuuycrRigAAAABJRU5ErkJggg==");mask-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAQAAACTbf5ZAAAEiklEQVR42u2dMW8URxiGn9mZs6CylOKK0BMJWVSR+AEOkewuHZS4SGeqKA12EsmmACGRmAYKO5EoHPEDQAK7IkVs5UikWEiht4trAh2yd3YpdvfsFDh3u7Oz8613+9vd5+b75h0/MyerPzhbV0QH3AF3wB1wB9wG4KgdX864EJqEBI06C8AK+IQnXMaSYmRDjzvCR3zFgJ/oE5Oi2w+seIvhJq9YoIeV29Hjv7YmJeYC67zkKgmJzOKeZJwUmhTLFZ6zyWcyi3vSwlT5fH2NHX5gWl5xR6U+E2GZ5nt2uSYtrsqOTtbRF9nkOVewpFKgy5ejwpCQcJWXrNHPoVu+ls6Ku8cif7PIlISOrv562czdZ40Bc+HHlYvxKOJqhqdsMkNMimn7n4fHcTVghWniUIs7cnqvCMsUS+yyEGpcuR6FIq7W2crjKrCOdl92WVzFzPIbG1wIbQEa1XRXg8Vwg1cshRVX9b1GVtx9VkZxFURH1/m9K8worp4yk3d0i4FPxtUcA1boE6Oa7ejIyzOKuPqTBVIsurmO9vXgrKM/ZZ0tZrHNLUD9fdNFR8+yxQYXm4orv6Wl0FgSbrDbVFz57yVNRMw0Kwya8CXNTB6GlJgZNk/ElWoz8LEvmWPAmk+93+SCr4irRZ96v+kVbqYOPOr95pf0nvV+GH/DeNT74WgYT3o/LO/kQe+HJtpq1/shmsVa9X6o+wS16f1wN0Zq0vth7wTVoPfD38x2rPdl7N471PtSjis40/uSzmc40fvSTltV1vvyjpdV1Psyz9NV0PtyjwSX1Puyz0CX0PvSD31PrPfbcMr9v3q/h207cFbchd7/i68593GuNv3II8ICl/icHnysl01LYFMsBnjGN7xuf0nHKAx7XGee16dPWvJH2BJhGPKAuxwSwemTlhFeyAka+JklDgB9Oqzskk7zBeU2X7DAAQb1/7hyR9iiMRywzAbZz8ji8T4oETgBNIfc5QFDVB5HtBO46NpnfMseYIgnwZXVw0XX7jHPPHto1LiFLHGEs64dssqjceJHNnC28xDzmGX2x4sfucDZojFim1vs5DOyLX87I6KQ33BnFD+22g1N0IVcxM893pXvWhnARfz8yu1R/Di5TLCwmh2WeQEYrCvcEIEtGs2QVR5yRATuYMMDzrr2iIesMqwWP+EDF87iBcsu4if0paVFYXjDdb5kB43CktbxIBNMIb/jR+67i59QgY+dxR3+qadrwwE+jp9bbOfxY+t+qGmwazWafb7jMUf5/r6HyzTYtYc8GsVP7OvRpoFCLpR54Sw8FHJzsXRSmRfOIvX5AsZr106kzGUDl1Dmcku6pDKXOsKllblE4ErKXBpwZWUuqYedKHM5I+xImcsAdqjMwwd2rMxDB3auzEMGrkWZhwpcmzIPEbhWZR4ecM3KPCxgD8o8HGBPyjyUpaU3ZR7CCCcof8q8aeDsVwUelXmzwClTaH5nyZ8ybxa4xz73+IXYnzKv51Jj/nOac5znX7mFPPkIv+e9rPipPmkp+bCT5XAKZwuYDrgD7oA74A64A677+gA4lAuuycrRigAAAABJRU5ErkJggg==")}.anim-transport .at-ico.stop{-webkit-mask-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAQAAACTbf5ZAAAAoUlEQVR42u3csQ0AIAgAQTBu5P4jOJPOYGEk8b6nuNBRkCv+qgUwMDAwMDAwMDAwMDAwMDAwMDAwMPDD+unALHXIHmnDwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwBVL75aBgYGBgYGBgYGBgYGBgYGBgYGBgYGB77UBTsYE70ObiQkAAAAASUVORK5CYII=");mask-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAQAAACTbf5ZAAAAoUlEQVR42u3csQ0AIAgAQTBu5P4jOJPOYGEk8b6nuNBRkCv+qgUwMDAwMDAwMDAwMDAwMDAwMDAwMPDD+unALHXIHmnDwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwBVL75aBgYGBgYGBgYGBgYGBgYGBgYGBgYGB77UBTsYE70ObiQkAAAAASUVORK5CYII=")}</style>
+<style id="mobile-overlay-80pct">@media (max-width:760px){
+.anim-transport{bottom:50px !important;padding:5.6px 7.2px !important;gap:4.8px !important}
+.anim-transport .at-btn{font-size:11.2px !important;padding:3.2px 6.4px !important}
+.anim-transport .at-btn.at-icon-btn{padding:3.2px 6.4px !important}
+.anim-transport .at-ico{width:11.5px !important;height:11.5px !important;flex:0 0 11.5px !important}
+.anim-transport .at-time{font-size:8.8px !important}
+.anim-transport #atTrimBefore,.anim-transport #atTrimAfter{font-size:8.8px !important;padding:3.2px 4.8px !important}
+.viewport-toolbar{padding:4.8px !important;gap:4.8px !important}
+.viewport-toolbar button{font-size:8.8px !important;padding:5.6px 8.8px !important}
+.viewport-toolbar .sep{margin:3.2px 1.6px !important}
+}
+@media (max-width:480px){
+.viewport-toolbar button{font-size:8px !important;padding:5.6px 7.2px !important}
+}</style>
+<style id="mobile-at-detail">.anim-transport .at-detail-toggle{display:none}.anim-transport .at-detail-wrap{display:contents}
+@media (max-width:760px){
+.anim-transport .at-detail-toggle{display:inline-block !important;font-size:8.8px !important;padding:3.2px 4.8px !important;white-space:nowrap}
+.anim-transport .at-detail-wrap{display:none;position:absolute;right:0;bottom:calc(100% + 4px);gap:4.8px;padding:4.8px;background:#1c1926dd;backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:var(--radius)}
+.anim-transport.at-detail-open .at-detail-wrap{display:flex}
+}</style>
 </head>
 <body>
 
@@ -681,12 +702,8 @@ body:has(#paintStudio.open) .mobile-history-overlay{display:none !important;}@me
         <h3>光編集</h3>
         <div style="font-size:10.5px;color:var(--ink-faint);line-height:1.6;margin-bottom:10px;">撮影画像に光のにじみとレンズフレアを追加します。</div>
         <div class="slider-row">
-          <div class="slider-label"><span>全身ブルーム</span><span id="capBloomAllVal">0%</span></div>
+          <div class="slider-label"><span>ブルーム</span><span id="capBloomAllVal">0%</span></div>
           <input type="range" id="capBloomAll" min="0" max="100" value="0" step="1" />
-        </div>
-        <div class="slider-row">
-          <div class="slider-label"><span>服のみブルーム（明るい部分）</span><span id="capBloomClothesVal">0%</span></div>
-          <input type="range" id="capBloomClothes" min="0" max="100" value="0" step="1" />
         </div>
         <div class="slider-row">
           <div class="slider-label"><span>レンズフレア強度</span><span id="capLensFlareVal">0%</span></div>
@@ -979,13 +996,16 @@ body:has(#paintStudio.open) .mobile-history-overlay{display:none !important;}@me
     </div>
     <div class="anim-transport" id="animTransport" style="display:none;">
       <button class="at-btn" id="atRestart" title="最初に戻る">⏮</button>
-      <button class="at-btn" id="atPlayPause" title="再生 / 一時停止">⏸</button>
-      <button class="at-btn" id="atStop" title="停止">⏹</button>
+      <button class="at-btn at-icon-btn" id="atPlayPause" title="再生 / 一時停止" aria-label="再生 / 一時停止"><span class="at-ico pause" id="atPlayPauseIcon" aria-hidden="true"></span></button>
+      <button class="at-btn at-icon-btn" id="atStop" title="停止" aria-label="停止"><span class="at-ico stop" aria-hidden="true"></span></button>
       <span class="at-time" id="atTime">0:00</span>
       <input type="range" id="atSeek" class="at-seek" min="0" max="1" step="0.001" value="0" />
       <span class="at-time" id="atDuration">0:00</span>
-      <button class="at-btn" id="atTrimBefore" title="スライダー位置より前のアニメーションを削除します" style="font-size:11px;white-space:nowrap;padding:4px 6px;">前を削除</button>
-      <button class="at-btn" id="atTrimAfter" title="スライダー位置より後のアニメーションを削除します" style="font-size:11px;white-space:nowrap;padding:4px 6px;">後を削除</button>
+      <button class="at-btn at-detail-toggle" id="atDetailToggle" type="button" aria-expanded="false" title="詳細">詳細▼</button>
+      <span class="at-detail-wrap" id="atDetailWrap">
+        <button class="at-btn" id="atTrimBefore" title="スライダー位置より前のアニメーションを削除します" style="font-size:11px;white-space:nowrap;padding:4px 6px;">前を削除</button>
+        <button class="at-btn" id="atTrimAfter" title="スライダー位置より後のアニメーションを削除します" style="font-size:11px;white-space:nowrap;padding:4px 6px;">後を削除</button>
+      </span>
     </div>
   </div>
 </div>
@@ -2935,7 +2955,8 @@ if(atTrimBefore)atTrimBefore.addEventListener('click',()=>stitchTrim('before'));
 
 function stopPoseAnimation(keepOffsets){stopMultiAvatarPosePlayers();poseBlend=null;poseInitTime=0;if(!keepOffsets)layerClear();if(poseMixer){poseMixer.stopAllAction();if(poseAction)poseMixer.uncacheClip(poseAction.getClip());}
 poseMixer=null;poseAction=null;psAnimTransportCache={action:null,time:-1,duration:-1,paused:null};btnPauseAnim.disabled=true;btnPauseAnim.textContent='一時停止';btnPauseAnim.classList.remove('active');btnStopAnim.disabled=true;hideAnimTransport();}
-function setAnimPaused(paused){if(!poseAction)return;poseAction.paused=paused;btnPauseAnim.textContent=paused?'再開':'一時停止';btnPauseAnim.classList.toggle('active',paused);atPlayPause.textContent=paused?'▶':'⏸';atPlayPause.title=paused?'再生':'一時停止';if(!paused&&loadedAvatars.length>1)syncMultiAvatarPosePlayers();else if(paused){for(const p of multiAvatarPosePlayers.values())p.action.paused=true;}}
+function setAtPlayPauseIcon(paused){const ic=document.getElementById('atPlayPauseIcon');if(!ic)return;ic.classList.toggle('play',!!paused);ic.classList.toggle('pause',!paused);}
+function setAnimPaused(paused){if(!poseAction)return;poseAction.paused=paused;btnPauseAnim.textContent=paused?'再開':'一時停止';btnPauseAnim.classList.toggle('active',paused);setAtPlayPauseIcon(paused);atPlayPause.title=paused?'再生':'一時停止';if(!paused&&loadedAvatars.length>1)syncMultiAvatarPosePlayers();else if(paused){for(const p of multiAvatarPosePlayers.values())p.action.paused=true;}}
 btnPauseAnim.addEventListener('click',()=>{if(!poseAction)return;setAnimPaused(!poseAction.paused);if(!poseAction.paused){const activeRecord=loadedAvatars.find(x=>x.vrm===currentVrm);if(activeRecord&&poseAction.getClip()&&!poseAction.__fallbackClip){activeRecord.poseClip=poseAction.getClip();activeRecord.posePlaybackState={clip:poseAction.getClip(),time:poseAction.time||0,paused:!!poseAction.paused,ownerAvatarId:activeRecord.id};}syncMultiAvatarPosePlayers();}for(const p of multiAvatarPosePlayers.values()){p.action.paused=poseAction.paused;if(!poseAction.paused&&poseAction.getClip().duration>0)p.action.time=(poseAction.time||0)%p.action.getClip().duration;}poseStatusEl.textContent=poseAction.paused
 ?'アニメーションを一時停止しました。'
 :'アニメーションを再開しました。';});btnStopAnim.addEventListener('click',()=>{loadedAvatars.forEach(x=>{x.poseClip=null;});stopPoseAnimation();poseStatusEl.textContent='アニメーションを停止しました。';});function formatAnimTime(t){if(!isFinite(t)||t<0)t=0;const m=Math.floor(t/60);const s=Math.floor(t%60);return m+':'+String(s).padStart(2,'0');}
@@ -2943,7 +2964,7 @@ function showAnimTransport(){animTransportEl.style.display='flex';btnSavePoseAni
 function hideAnimTransport(){animTransportEl.style.display='none';animScrubbing=false;btnSavePose.disabled=!currentVrm;btnSavePose.title='';btnSavePoseAnim.disabled=!currentVrm;btnSavePoseAnim.title='';}
 let animScrubbing=false;let psAnimTransportCache={action:null,time:-1,duration:-1,paused:null};function updateAnimTransport(){if(!poseAction||animScrubbing)return;const dur=poseAction.getClip().duration||0;const time=poseAction.time||0;const paused=!!poseAction.paused;const c=psAnimTransportCache;if(c.action!==poseAction||c.duration!==dur){atSeek.max=String(dur||1);atDuration.textContent=formatAnimTime(dur);c.action=poseAction;c.duration=dur;}
 if(c.action!==poseAction||c.time!==time){atSeek.value=String(time);atTime.textContent=formatAnimTime(time);c.time=time;}
-if(c.paused!==paused){atPlayPause.textContent=paused?'▶':'⏸';c.paused=paused;}}
+if(c.paused!==paused){setAtPlayPauseIcon(paused);c.paused=paused;}}
 atPlayPause.addEventListener('click',()=>{if(!poseAction)return;setAnimPaused(!poseAction.paused);if(!poseAction.paused){const activeRecord=loadedAvatars.find(x=>x.vrm===currentVrm);if(activeRecord&&poseAction.getClip()&&!poseAction.__fallbackClip)activeRecord.poseClip=poseAction.getClip();syncMultiAvatarPosePlayers();for(const p of multiAvatarPosePlayers.values()){p.action.paused=false;if(p.item.poseClip&&p.item.poseClip.duration>0)p.action.time=(poseAction.time||0)%p.item.poseClip.duration;}}else{for(const p of multiAvatarPosePlayers.values())p.action.paused=true;}poseStatusEl.textContent=poseAction.paused
 ?'アニメーションを一時停止しました。'
 :'アニメーションを再開しました。';});atStop.addEventListener('click',()=>{loadedAvatars.forEach(x=>{x.poseClip=null;});stopPoseAnimation();poseStatusEl.textContent='アニメーションを停止しました。';});atRestart.addEventListener('click',()=>{if(!poseAction||!poseMixer)return;poseAction.time=0;poseMixer.update(0);clampAllBonesToJointLimits();syncMultiAvatarPoseTime();});let animWasPlayingBeforeScrub=false;function beginAnimScrub(){if(!poseAction)return;animScrubbing=true;animWasPlayingBeforeScrub=!poseAction.paused;poseAction.paused=true;}
@@ -3221,12 +3242,13 @@ function makeCaptureFilename(prefix, extension){const d=new Date();const pad=n=>
 async function takeScreenshotTransparent(){const wasGrid=grid.visible;const wasFloor=floor.visible;grid.visible=false;floor.visible=false;try{const canvas=captureCanvas(false);await downloadCanvasPng(canvas,makeCaptureFilename('vrm-photo-t','png'));}catch(err){console.error('透明背景撮影に失敗しました:',err);alert('撮影に失敗しました。もう一度お試しください。');}finally{grid.visible=wasGrid;floor.visible=wasFloor;renderer.render(scene,camera);}}
 document.getElementById('tbShotBg').addEventListener('click',takeScreenshotWithBackground);document.getElementById('tbShotTransparent').addEventListener('click',takeScreenshotTransparent);capShotBg.addEventListener('click',takeScreenshotWithBackground);capShotTransparent.addEventListener('click',takeScreenshotTransparent);const tbRecordBtn=document.getElementById('tbRecord');const recIndicatorEl=document.getElementById('recIndicator');let isRecording=false;let mediaRecorder=null;let recordChunks=[];let recordMimeType='';let recordCanvas=null;let recordCtx=null;let recordSpec=null;let recordOutputFilename='';function pickRecordingMimeType(){const candidates=['video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1.4D401E','video/mp4',];for(const type of candidates){if(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(type))return type;}
 return'';}
-const RECORD_FPS=60;
+const RECORD_FPS=30;
 const RECORD_MAX_PIXELS=Infinity;
+let recordRawCanvas=null;let recordLightPool={};let recordLightCache={};function capIsCoarse(){try{return window.matchMedia('(pointer: coarse)').matches;}catch(e){return false;}}
 let recordBgCanvas=null;let recordBgKey='';let recordBgImageRef=null;let recordTrack=null;let recordNextDraw=0;let recordSavedPixelRatio=null;
 function restoreRecordPixelRatio(){if(recordSavedPixelRatio===null)return;const r=recordSavedPixelRatio;recordSavedPixelRatio=null;renderer.setPixelRatio(r);resize();}
 function resetRecordState(){if(recordCanvas&&recordCanvas._recordStream){try{recordCanvas._recordStream.getTracks().forEach(track=>track.stop());}catch(e){}}
-recordCanvas=null;recordCtx=null;recordSpec=null;recordBgCanvas=null;recordBgKey='';recordBgImageRef=null;recordTrack=null;recordNextDraw=0;restoreRecordPixelRatio();}
+recordCanvas=null;recordCtx=null;recordSpec=null;recordRawCanvas=null;recordLightPool={};recordLightCache={};recordBgCanvas=null;recordBgKey='';recordBgImageRef=null;recordTrack=null;recordNextDraw=0;restoreRecordPixelRatio();}
 function startRecording(){if(isRecording)return;recordOutputFilename=makeCaptureFilename('vrm-video','mp4');const glCanvas=renderer.domElement;if(!window.MediaRecorder){alert('このブラウザは動画撮影に対応していません。');return;}
 if(!glCanvas.captureStream){alert('このブラウザはキャンバス動画撮影に対応していません。');return;}
 const spec=getCaptureSpec();let outW=Math.max(2,Math.round(spec.outW));let outH=Math.max(2,Math.round(spec.outH));const shrink=Math.min(1,Math.sqrt(RECORD_MAX_PIXELS/Math.max(1,outW*outH)));outW=Math.max(2,Math.floor(outW*shrink/2)*2);outH=Math.max(2,Math.floor(outH*shrink/2)*2);
@@ -3234,7 +3256,7 @@ recordSpec=spec;recordCanvas=document.createElement('canvas');recordCanvas.width
 recordMimeType=pickRecordingMimeType();if(!recordMimeType){resetRecordState();alert('このブラウザではMP4（H.264）動画を録画できません。Chrome / Edgeなど、MP4のMediaRecorderに対応したブラウザでお試しください。');return;}
 let stream=recordCanvas.captureStream(0);let track=stream.getVideoTracks()[0];if(!track||typeof track.requestFrame!=='function'){stream.getTracks().forEach(t=>t.stop());stream=recordCanvas.captureStream(RECORD_FPS);track=null;}
 recordTrack=track;recordCanvas._recordStream=stream;
-try{const videoBitsPerSecond=Math.max(4_000_000,Math.min(20_000_000,Math.round(outW*outH*RECORD_FPS*0.08)));mediaRecorder=new MediaRecorder(stream,{mimeType:recordMimeType,videoBitsPerSecond,});}catch(err){resetRecordState();alert('MP4動画の録画を開始できませんでした。');return;}
+try{const videoBitsPerSecond=Math.max(6_000_000,Math.min(24_000_000,Math.round(outW*outH*RECORD_FPS*0.2)));mediaRecorder=new MediaRecorder(stream,{mimeType:recordMimeType,videoBitsPerSecond,});}catch(err){resetRecordState();alert('MP4動画の録画を開始できませんでした。');return;}
 recordChunks=[];mediaRecorder.ondataavailable=(e)=>{if(e.data&&e.data.size)recordChunks.push(e.data);};mediaRecorder.onstop=()=>{const blob=new Blob(recordChunks,{type:recordMimeType||'video/mp4'});const url=URL.createObjectURL(blob);downloadDataUrl(url,recordOutputFilename||makeCaptureFilename('vrm-video','mp4'));setTimeout(()=>URL.revokeObjectURL(url),1000);recordChunks=[];resetRecordState();};
 const curRatio=renderer.getPixelRatio();const wantRatio=outW/Math.max(1,spec.frame.w);if(wantRatio<curRatio-0.01){recordSavedPixelRatio=curRatio;renderer.setPixelRatio(Math.max(0.5,wantRatio));}
 try{hairOverlaySetHidden(true);}catch(_){}renderer.render(scene,camera);mediaRecorder.start();isRecording=true;drawRecordingFrame(true);tbRecordBtn.textContent='■ 停止';tbRecordBtn.classList.add('active');recIndicatorEl.classList.add('show');}
@@ -3247,15 +3269,15 @@ const ctx=recordCtx;ctx.globalCompositeOperation='copy';ctx.drawImage(recordBgCa
 // Build a clean frame from the current WebGL render, apply the same light-edit pipeline
 // used by still photos, then composite it over the selected recording background.
 // Previously video recording copied glCanvas directly, so preview light edits were omitted.
-const rawFrame=document.createElement('canvas');rawFrame.width=W;rawFrame.height=H;
-const rawCtx=rawFrame.getContext('2d');
+const rawFrame=recordRawCanvas||(recordRawCanvas=document.createElement('canvas'));if(rawFrame.width!==W)rawFrame.width=W;if(rawFrame.height!==H)rawFrame.height=H;
+const rawCtx=rawFrame.getContext('2d');if(rawCtx)rawCtx.clearRect(0,0,W,H);
 const kx=W/sw,ky=H/sh;
 if(rawCtx){
  // Compose every image layer into the frame BEFORE applying bloom. This ensures the
  // bloom pass is the final image operation, rather than being covered by the overlay.
  rawCtx.drawImage(glCanvas,sx,sy,sw,sh,0,0,W,H);
  drawCaptureImageOverlay(rawCtx,fullW,fullH,-sx*kx,-sy*ky,fullW*kx,fullH*ky);
- const litFrame=applyCaptureLightEffects(rawFrame);
+ const litFrame=applyCaptureLightEffects(rawFrame,{pool:recordLightPool,cache:recordLightCache,maxWork:capIsCoarse()?480:720});
  ctx.drawImage(litFrame,0,0,W,H);
 }
 if(recordTrack){try{recordTrack.requestFrame();}catch(e){}}}
@@ -3270,7 +3292,7 @@ const rMax=Math.min(maxDim/cssW,maxDim/cssH,Math.sqrt(maxPx/(cssW*cssH)));if(r>r
 const outW=spec.cropped?Math.round(spec.outW*k):Math.floor(cssW*r);const outH=spec.cropped?Math.round(spec.outH*k):Math.floor(cssH*r);return{ratio:r,k,outW,outH};}
 function captureCanvasCore(spec,withBackground){if(spec.cropped)return renderCroppedCapture(spec,withBackground);renderer.render(scene,camera);const glCanvas=renderer.domElement;const out=document.createElement('canvas');out.width=glCanvas.width;out.height=glCanvas.height;const ctx=out.getContext('2d');if(withBackground)drawCaptureBackground(ctx,out.width,out.height);ctx.drawImage(glCanvas,0,0);drawCaptureImageOverlay(ctx,out.width,out.height,0,0,out.width,out.height);return out;}
 function captureCanvas(withBackground){try{hairOverlaySetHidden(true);}catch(_){}try{renderer.render(scene,camera);const canvas=captureCanvas_(withBackground);return applyCaptureLightEffects(canvas);}finally{try{hairOverlaySetHidden(false);}catch(_){}}}
-const capLightDefaults={all:0,clothes:0,flare:0,length:55,width:35,color:'warm'};
+const capLightDefaults={all:0,flare:0,length:55,width:35,color:'warm'};
 function capLightValue(id){const e=document.getElementById(id);return e?e.value:0;}
 function capLightColor(){return ({warm:[255,174,92],white:[255,246,225],pink:[255,135,190],blue:[120,190,255]})[capLightValue('capLensColor')]||[255,174,92];}
 function detectCapLightSources(source,w,h,maxSpots=8){
@@ -3339,9 +3361,9 @@ function detectCapLightSources(source,w,h,maxSpots=8){
    return picked;
  }catch(e){console.warn('テクスチャ項目ごとの明るい場所の検出に失敗しました:',e);return[];}
 }
-function drawCapStarburstFlare(ctx,source,w,h,strength,lengthPct,widthPct,rgb){
+function drawCapStarburstFlare(ctx,source,w,h,strength,lengthPct,widthPct,rgb,presetSpots){
  if(strength<=0)return;
- const spots=detectCapLightSources(source,w,h,8);if(!spots.length)return;
+ const spots=presetSpots||detectCapLightSources(source,w,h,8);if(!spots.length)return;
  const baseL=Math.min(w,h)*(.055+.48*(lengthPct/100));
  const baseLineW=Math.max(1,Math.min(w,h)*(.0008+.0035*(widthPct/100)));
  ctx.save();ctx.globalCompositeOperation='screen';
@@ -3380,7 +3402,6 @@ function updateCapLightPreview(){
  if(!preview||!renderer||!renderer.domElement)return;
  const source=renderer.domElement,w=source.width,h=source.height;
  const all=Number(capLightValue('capBloomAll'))/100;
- const clothes=Number(capLightValue('capBloomClothes'))/100;
  const flare=Number(capLightValue('capLensFlare'))/100;
  const ctx=preview.getContext('2d');
  if(!ctx)return;
@@ -3389,12 +3410,12 @@ function updateCapLightPreview(){
  if(preview.height!==h)preview.height=h;
  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;
  ctx.globalCompositeOperation='source-over';ctx.filter='none';ctx.clearRect(0,0,w,h);ctx.restore();
- if(!w||!h||(!all&&!clothes&&!flare)){preview.style.display='none';return;}
+ if(!w||!h||(!all&&!flare)){preview.style.display='none';return;}
  // Blur only extracted highlights. Blurring the whole model image creates a ghost silhouette.
  const makeHighlightCanvas=(threshold,softness)=>{
    // Extract highlights at a capped working resolution. The glow is blurred anyway,
    // so processing every pixel of a 2K/4K viewport wastes CPU without visible benefit.
-   const scale=Math.min(1,960/Math.max(w,h));
+   const scale=Math.min(1,(capIsCoarse()?512:960)/Math.max(w,h));
    const pw=Math.max(1,Math.round(w*scale)),ph=Math.max(1,Math.round(h*scale));
    const work=document.createElement('canvas');work.width=pw;work.height=ph;
    const tctx=work.getContext('2d',{willReadFrequently:true});if(!tctx)return work;
@@ -3413,31 +3434,30 @@ function updateCapLightPreview(){
  if(all){const glow=makeHighlightCanvas(105,1);ctx.save();ctx.globalCompositeOperation='screen';
    ctx.globalAlpha=Math.min(.95,all*1.15);ctx.filter='blur('+Math.max(2,Math.min(w,h)*(.006+all*.018))+'px)';
    ctx.drawImage(glow,0,0);ctx.filter='none';ctx.restore();}
- if(clothes){const glow=makeHighlightCanvas(135,Math.min(1,clothes*1.7));ctx.save();ctx.globalCompositeOperation='screen';
-   ctx.globalAlpha=Math.min(.9,clothes*1.15);ctx.filter='blur('+Math.max(2,Math.min(w,h)*(.008+clothes*.012))+'px)';
-   ctx.drawImage(glow,0,0);ctx.filter='none';ctx.restore();}
  if(flare){drawCapStarburstFlare(ctx,source,w,h,flare,Number(capLightValue('capLensLength')),Number(capLightValue('capLensWidth')),capLightColor());}
  preview.style.display='block';
 }
-function applyCaptureLightEffects(source){
+function applyCaptureLightEffects(source,opts){
  const all=Number(capLightValue('capBloomAll'))/100;
- const clothes=Number(capLightValue('capBloomClothes'))/100;
  const flare=Number(capLightValue('capLensFlare'))/100;
- if(!all&&!clothes&&!flare)return source;
+ if(!all&&!flare)return source;
  const w=source.width,h=source.height;
- const out=document.createElement('canvas');out.width=w;out.height=h;
+ const pool=(opts&&opts.pool)||null;const maxWork=(opts&&opts.maxWork)||960;
+ const out=pool?(pool.out||(pool.out=document.createElement('canvas'))):document.createElement('canvas');
+ if(out.width!==w)out.width=w;if(out.height!==h)out.height=h;
  const ctx=out.getContext('2d');if(!ctx)return source;
+ if(pool)ctx.clearRect(0,0,w,h);
  ctx.drawImage(source,0,0);
  // Match the on-screen light-edit preview: bloom only extracted highlights, not the whole silhouette.
  const makeHighlightCanvas=(threshold,softness)=>{
    // Video capture runs this pass per frame. Limit pixel work to 960px on the long
    // edge; the blurred result is then scaled to output size, preserving the glow
    // while avoiding full-resolution getImageData/putImageData on every frame.
-   const scale=Math.min(1,960/Math.max(w,h));
+   const scale=Math.min(1,maxWork/Math.max(w,h));
    const pw=Math.max(1,Math.round(w*scale)),ph=Math.max(1,Math.round(h*scale));
-   const work=document.createElement('canvas');work.width=pw;work.height=ph;
+   const work=pool?(pool.work||(pool.work=document.createElement('canvas'))):document.createElement('canvas');if(work.width!==pw)work.width=pw;if(work.height!==ph)work.height=ph;
    const tctx=work.getContext('2d',{willReadFrequently:true});if(!tctx)return work;
-   tctx.drawImage(source,0,0,pw,ph);
+   if(pool)tctx.clearRect(0,0,pw,ph);tctx.drawImage(source,0,0,pw,ph);
    try{
      const im=tctx.getImageData(0,0,pw,ph),d=im.data;
      for(let i=0;i<d.length;i+=4){
@@ -3448,8 +3468,8 @@ function applyCaptureLightEffects(source){
      tctx.putImageData(im,0,0);
    }catch(err){console.warn('撮影用の光編集ハイライト抽出に失敗しました:',err);}
    if(pw===w&&ph===h)return work;
-   const tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;
-   const outCtx=tmp.getContext('2d');if(outCtx)outCtx.drawImage(work,0,0,w,h);
+   const tmp=pool?(pool.tmp||(pool.tmp=document.createElement('canvas'))):document.createElement('canvas');if(tmp.width!==w)tmp.width=w;if(tmp.height!==h)tmp.height=h;
+   const outCtx=tmp.getContext('2d');if(outCtx){if(pool)outCtx.clearRect(0,0,w,h);outCtx.drawImage(work,0,0,w,h);}
    return tmp;
  };
  if(all){
@@ -3458,20 +3478,21 @@ function applyCaptureLightEffects(source){
    ctx.filter='blur('+Math.max(2,Math.min(w,h)*(.006+all*.018))+'px)';ctx.drawImage(glow,0,0);
    ctx.filter='none';ctx.restore();
  }
- if(clothes){
-   const glow=makeHighlightCanvas(135,Math.min(1,clothes*1.7));
-   ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=Math.min(.9,clothes*1.15);
-   ctx.filter='blur('+Math.max(2,Math.min(w,h)*(.008+clothes*.012))+'px)';ctx.drawImage(glow,0,0);
-   ctx.filter='none';ctx.restore();
- }
- if(flare)drawCapStarburstFlare(ctx,source,w,h,flare,Number(capLightValue('capLensLength')),Number(capLightValue('capLensWidth')),capLightColor());
+ if(flare){let spots;const cache=opts&&opts.cache;
+   // Video: detect highlight positions only every 3rd frame and reuse them in between.
+   if(cache){cache.n=cache.n||0;if(!cache.spots||cache.n%3===0)cache.spots=detectCapLightSources(source,w,h,8);cache.n++;spots=cache.spots;}
+   drawCapStarburstFlare(ctx,source,w,h,flare,Number(capLightValue('capLensLength')),Number(capLightValue('capLensWidth')),capLightColor(),spots);}
  return out;
 }
 let capLightPreviewRaf=0;
-function scheduleCapLightPreview(){if(capLightPreviewRaf)return;capLightPreviewRaf=requestAnimationFrame(()=>{capLightPreviewRaf=0;updateCapLightPreview();});}
-['capBloomAll','capBloomClothes','capLensFlare','capLensLength','capLensWidth'].forEach(id=>{const el=document.getElementById(id),v=document.getElementById(id+'Val');if(!el)return;el.addEventListener('input',()=>{if(v)v.textContent=el.value+'%';scheduleCapLightPreview();});el.addEventListener('change',scheduleCapLightPreview);el.addEventListener('pointerup',scheduleCapLightPreview);el.addEventListener('keyup',scheduleCapLightPreview);});
+let capLightPreviewLast=0,capLightPreviewTimer=0;
+function scheduleCapLightPreview(){if(capLightPreviewRaf)return;capLightPreviewRaf=requestAnimationFrame(()=>{capLightPreviewRaf=0;
+  // While recording, the on-screen preview shares the CPU with the video encoder pass, so refresh it at ~10fps.
+  if(isRecording){const n=performance.now(),wait=100-(n-capLightPreviewLast);if(wait>0){if(!capLightPreviewTimer)capLightPreviewTimer=setTimeout(()=>{capLightPreviewTimer=0;scheduleCapLightPreview();},wait);return;}capLightPreviewLast=n;}
+  updateCapLightPreview();});}
+['capBloomAll','capLensFlare','capLensLength','capLensWidth'].forEach(id=>{const el=document.getElementById(id),v=document.getElementById(id+'Val');if(!el)return;el.addEventListener('input',()=>{if(v)v.textContent=el.value+'%';scheduleCapLightPreview();});el.addEventListener('change',scheduleCapLightPreview);el.addEventListener('pointerup',scheduleCapLightPreview);el.addEventListener('keyup',scheduleCapLightPreview);});
 document.getElementById('capLensColor')?.addEventListener('input',e=>{const v=document.getElementById('capLensColorVal');if(v)v.textContent=e.target.options[e.target.selectedIndex].text;scheduleCapLightPreview();});document.getElementById('capLensColor')?.addEventListener('change',scheduleCapLightPreview);window.addEventListener('resize',scheduleCapLightPreview);
-document.getElementById('capLightReset')?.addEventListener('click',()=>{for(const [id,val] of [['capBloomAll',0],['capBloomClothes',0],['capLensFlare',0],['capLensLength',55],['capLensWidth',35]]){const e=document.getElementById(id);if(e)e.value=val;const v=document.getElementById(id+'Val');if(v)v.textContent=val+'%';}const c=document.getElementById('capLensColor');if(c){c.value='warm';const v=document.getElementById('capLensColorVal');if(v)v.textContent='暖色';}scheduleCapLightPreview();});scheduleCapLightPreview();
+document.getElementById('capLightReset')?.addEventListener('click',()=>{for(const [id,val] of [['capBloomAll',0],['capLensFlare',0],['capLensLength',55],['capLensWidth',35]]){const e=document.getElementById(id);if(e)e.value=val;const v=document.getElementById(id+'Val');if(v)v.textContent=val+'%';}const c=document.getElementById('capLensColor');if(c){c.value='warm';const v=document.getElementById('capLensColorVal');if(v)v.textContent='暖色';}scheduleCapLightPreview();});scheduleCapLightPreview();
 // Keep the light overlay registered to the current camera view. OrbitControls emits
 // change while orbiting/panning/zooming (including damping frames); redraw from the
 // freshly rendered WebGL canvas instead of leaving the previous screen-space glow behind.
@@ -4968,7 +4989,7 @@ let avatarYOffsetCm=0,avatarXOffsetCm=0,avatarZOffsetCm=0;const avatarPositionUn
 if(poseMixer){if(!skipSpringPhysicsThisFrame){tickPoseBlend(dt);layerBeforeMixer();poseMixer.update(dt);layerAfterMixer();for(const p of multiAvatarPosePlayers.values()){if(!p.action.paused){p.mixer.update(dt);if(jointLimitsEnabled){try{const prev=currentVrm;currentVrm=p.item.vrm;clampAllBonesToJointLimits();currentVrm=prev;}catch(_){currentVrm=loadedAvatars.find(x=>x.vrm===currentVrm)?.vrm||currentVrm;}}}}}{if(btnSavePose.disabled&&currentVrm){btnSavePose.disabled=false;btnSavePoseAnim.disabled=false;const t='再生中のモーション／組み込みタイムラインをアニメーションとして保存します。';btnSavePose.title=t;btnSavePoseAnim.title=t;}}if(poseLockCenterEl&&poseLockCenterEl.checked&&currentVrm&&currentVrm.humanoid){const hipsNode=currentVrm.humanoid.getNormalizedBoneNode('hips');if(hipsNode){const restHips=getNormalizedRestHips(currentVrm);hipsNode.position.x=restHips.x;hipsNode.position.z=restHips.z;}}}
 if(!skipSpringPhysicsThisFrame&&jointLimitsEnabled&&poseAction&&!poseAction.paused){clampAllBonesToJointLimits();}
 stitchTickUI();updateAnimTransport();if(currentVrm){if(skipSpringPhysicsThisFrame){try{if(currentVrm.humanoid&&typeof currentVrm.humanoid.update==='function')currentVrm.humanoid.update();}catch(_){}restoreHistorySpringPoseSnapshot();}else{currentVrm.update(dt);}}for(const p of multiAvatarPosePlayers.values()){const v=p.item&&p.item.vrm;if(!v||v===currentVrm)continue;try{if(poseLockCenterEl&&poseLockCenterEl.checked&&v.humanoid){const hn=v.humanoid.getNormalizedBoneNode('hips');if(hn){const rh=getNormalizedRestHips(v);hn.position.x=rh.x;hn.position.z=rh.z;}}}catch(_){}try{if(skipSpringPhysicsThisFrame||p.action.paused){if(v.humanoid&&typeof v.humanoid.update==='function')v.humanoid.update();if(skipSpringPhysicsThisFrame)restoreHistorySpringPoseSnapshot();}else{v.update(dt);}}catch(_){}}try{hairOverlayTick();}catch(_){}if(skipSpringPhysicsThisFrame){restoreHistorySpringPoseSnapshot();if(historyPhysicsPauseFrames===0){refreshPhysicsAfterHistory();captureHistorySpringPoseSnapshot();}}
-const paintOpen=paintStudioEl.classList.contains('open');if(!paintOpen){controls.update();updateBoneHandles();renderer.render(scene,camera);{const _la=Number(document.getElementById('capBloomAll')?.value||0),_lc=Number(document.getElementById('capBloomClothes')?.value||0),_lf=Number(document.getElementById('capLensFlare')?.value||0);if(currentVrm&&(_la||_lc||_lf)&&(autoRotate||(poseMixer&&poseAction&&!poseAction.paused)||stitchOn()))scheduleCapLightPreview();}if(isRecording&&recordCtx){drawRecordingFrame();}}else{previewControls.update();const mobilePaint=psIsMobileTextureViewport();const hiddenPreview=mobilePaint&&(paintStudioEl.classList.contains('ps-view-tex')||paintStudioEl.classList.contains('ps-view-full'));if(!hiddenPreview){if(!mobilePaint||psIsPainting3D){previewRenderer.render(scene,previewCamera);}else{animate._psMobilePreviewTick=((animate._psMobilePreviewTick||0)+1)%2;if(animate._psMobilePreviewTick===0)previewRenderer.render(scene,previewCamera);}}}
+const paintOpen=paintStudioEl.classList.contains('open');if(!paintOpen){controls.update();updateBoneHandles();renderer.render(scene,camera);{const _la=Number(document.getElementById('capBloomAll')?.value||0),_lf=Number(document.getElementById('capLensFlare')?.value||0);if(currentVrm&&(_la||_lf)&&(autoRotate||(poseMixer&&poseAction&&!poseAction.paused)||stitchOn()))scheduleCapLightPreview();}if(isRecording&&recordCtx){drawRecordingFrame();}}else{previewControls.update();const mobilePaint=psIsMobileTextureViewport();const hiddenPreview=mobilePaint&&(paintStudioEl.classList.contains('ps-view-tex')||paintStudioEl.classList.contains('ps-view-full'));if(!hiddenPreview){if(!mobilePaint||psIsPainting3D){previewRenderer.render(scene,previewCamera);}else{animate._psMobilePreviewTick=((animate._psMobilePreviewTick||0)+1)%2;if(animate._psMobilePreviewTick===0)previewRenderer.render(scene,previewCamera);}}}
 frameLabel.textContent=currentVrm?'':'';}
 resize();animate();function wireSliderNumberInput(range){if(!(range instanceof HTMLInputElement)||range.type!=='range')return;if(range.dataset.numWired)return;const row=range.closest('.slider-row');if(!row){range.dataset.numWired='1';return;}
 const label=row.querySelector(':scope > .slider-label');if(!label){range.dataset.numWired='1';return;}
@@ -5441,5 +5462,6 @@ wireAllSliderNumberInputs();const sliderNumObserver=new MutationObserver((mutati
 }
 </style>
 
+<script>(function(){var t=document.getElementById('atDetailToggle'),tr=document.getElementById('animTransport');if(!t||!tr)return;function set(o){tr.classList.toggle('at-detail-open',o);t.textContent=o?'詳細▲':'詳細▼';t.setAttribute('aria-expanded',o?'true':'false');}t.addEventListener('click',function(e){e.stopPropagation();set(!tr.classList.contains('at-detail-open'));});document.addEventListener('pointerdown',function(e){if(tr.classList.contains('at-detail-open')&&!tr.contains(e.target))set(false);});})();</script>
 </body>
 </html>
