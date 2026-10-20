@@ -5378,5 +5378,68 @@ wireAllSliderNumberInputs();const sliderNumObserver=new MutationObserver((mutati
   color: var(--ink-dim) !important;
 }
 </style>
+
+<style id="mobile-display2-bottom-tools-match-fullscreen">
+/* スマホ表示2でも、全画面表示と同じ下部位置にブラシ・操作・選択ツールを表示 */
+@media (max-width:760px){
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush{
+    display:contents !important;
+    visibility:visible !important;
+  }
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush > *:not(.ps-main-tools-row):not(.ps-mobile-control-row):not(.ps-mobile-selection-row){
+    display:none !important;
+  }
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-main-tools-row,
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-mobile-control-row,
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-mobile-selection-row{
+    position:fixed !important;
+    z-index:130 !important;
+    display:flex !important;
+    box-sizing:border-box !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+    background:var(--panel,#fff) !important;
+  }
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-main-tools-row{
+    left:0 !important; right:0 !important; bottom:76px !important;
+    width:100vw !important; height:46px !important; min-height:46px !important;
+    flex-wrap:nowrap !important; align-items:center !important;
+    overflow-x:auto !important; overflow-y:hidden !important;
+    padding:4px 6px !important; gap:5px !important;
+    border-top:1px solid var(--line) !important;
+    border-bottom:1px solid var(--line) !important;
+  }
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-mobile-control-row,
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-mobile-selection-row{
+    bottom:30px !important; height:46px !important; min-height:46px !important;
+    padding:4px 0 !important; gap:0 !important; overflow:hidden !important;
+    border:0 !important;
+  }
+  /* 全画面表示と同じく、2段目の操作ボタン群を画面中央基準で配置する */
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-mobile-control-row{
+    left:0 !important; right:auto !important;
+    width:100vw !important; min-width:100vw !important; max-width:100vw !important;
+    justify-content:flex-start !important;
+    padding-left:calc(50vw - 171px) !important; padding-right:0 !important;
+  }
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-mobile-selection-row{
+    left:calc(50vw - 19px) !important; right:auto !important;
+    width:190px !important; min-width:190px !important; max-width:190px !important;
+    justify-content:flex-start !important; padding-left:0 !important; padding-right:0 !important;
+    background:transparent !important;
+  }
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-main-tools-row{
+    justify-content:center !important;
+  }
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-main-tools-row .ps-shape-btn,
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-mobile-control-row .ps-shape-btn,
+  .paint-studio-overlay.open.ps-mobile-display2 .ps-panel.ps-brush .ps-mobile-selection-row .ps-shape-btn{
+    flex:0 0 38px !important; width:38px !important; min-width:38px !important;
+    max-width:38px !important; height:38px !important; min-height:38px !important;
+  }
+}
+</style>
+
 </body>
 </html>
