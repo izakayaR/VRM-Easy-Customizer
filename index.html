@@ -197,6 +197,17 @@ body.vp-recording .rec-mobile-bar{display:contents}
 body.vp-recording .capture-frame{box-shadow:none !important}
 }
 </style>
+<style id="plugin-import-area-style">
+#capPluginToggle{min-width:0 !important;width:34px;padding:7px 0 !important;flex:0 0 auto;line-height:1}
+#capPluginToggle .cap-arrow{display:inline-block;transition:transform .15s ease}
+#capPluginToggle[aria-expanded="true"] .cap-arrow{transform:rotate(180deg)}
+#capPluginImportArea{display:none;margin-bottom:8px}
+#capPluginImportArea.open{display:block}
+#capPluginDrop{border:1.5px dashed var(--line);border-radius:var(--radius);padding:16px 10px;text-align:center;font-size:11px;line-height:1.6;color:var(--ink-dim);cursor:pointer;transition:border-color .12s ease,background .12s ease}
+#capPluginDrop span{color:var(--ink-faint);font-size:10.5px}
+#capPluginDrop:hover,#capPluginDrop:focus-visible{border-color:var(--gold);outline:none}
+#capPluginImport.cap-drag,#capPluginToggle.cap-drag,#capPluginDrop.cap-drag{border-color:var(--gold) !important;background:rgba(255,255,255,0.08) !important;color:var(--ink) !important}
+</style>
 </head>
 <body>
 
@@ -891,8 +902,9 @@ body.vp-recording .capture-frame{box-shadow:none !important}
     </div>
     <div class="section collapsed" id="capPluginBox">
       <h2>プラグイン</h2>
-          <div style="font-size:10.5px;color:var(--ink-faint);line-height:1.6;margin-bottom:10px;">プラグインの鍵ファイル（.json）をインポートすると、光編集に機能を追加できます。インポートしたプラグインは、サイトを閉じて再度開いても設定済みの状態で動作します。</div>
-          <div class="btn-row" style="margin-bottom:8px;"><button class="chip" id="capPluginImport" type="button">プラグインをインポート</button></div>
+          <div style="font-size:10.5px;color:var(--ink-faint);line-height:1.6;margin-bottom:10px;">プラグインの鍵ファイル（.json）をインポートすると、機能を追加できます。</div>
+          <div class="btn-row cap-plugin-row" style="margin-bottom:8px;"><button class="chip" id="capPluginImport" type="button">プラグインをインポート</button><button class="chip" id="capPluginToggle" type="button" aria-expanded="false" aria-controls="capPluginImportArea" aria-label="インポートのエリアを開く" title="インポートのエリアを開く"><span class="cap-arrow">▼</span></button></div>
+          <div id="capPluginImportArea" aria-hidden="true"><div id="capPluginDrop" role="button" tabindex="0" aria-label="鍵ファイル（.json）を選択またはドロップ">鍵ファイル（.json）をここにドロップ<br><span>またはクリックして選択</span></div></div>
           <input type="file" id="capPluginFile" accept=".json,application/json" style="display:none" />
           <div id="capPluginMsg" style="font-size:10.5px;color:var(--ink-faint);min-height:14px;margin-bottom:6px;line-height:1.5;"></div>
           <div id="capPluginEmpty" style="font-size:11px;color:var(--ink-faint);padding:6px 0;">導入済みのプラグインはありません。</div>
@@ -5711,11 +5723,36 @@ function importKeyText(text,fileName){
 btnEl.addEventListener('click',function(){
   if(!ready){say('起動中です。少し待ってからもう一度お試しください。',true);return;}
   fileEl.value='';fileEl.click();});
-fileEl.addEventListener('change',function(){
-  var f=fileEl.files&&fileEl.files[0];if(!f)return;
+function handleKeyFile(f){
+  if(!f)return;
   if(f.size>20000){say('鍵ファイルが大きすぎます。',true);return;}
   var r=new FileReader();r.onload=function(){importKeyText(String(r.result||''),f.name);};
-  r.onerror=function(){say('ファイルを読み込めませんでした。',true);};r.readAsText(f,'utf-8');});
+  r.onerror=function(){say('ファイルを読み込めませんでした。',true);};r.readAsText(f,'utf-8');}
+fileEl.addEventListener('change',function(){handleKeyFile(fileEl.files&&fileEl.files[0]);});
+
+/* ---- ドラッグ＆ドロップでインポート / ▼でインポート欄の開閉 ---- */
+var toggleEl=document.getElementById('capPluginToggle'),areaEl=document.getElementById('capPluginImportArea'),dropEl=document.getElementById('capPluginDrop');
+function isFileDrag(e){var t=e.dataTransfer&&e.dataTransfer.types;return !!t&&Array.prototype.indexOf.call(t,'Files')>=0;}
+function bindDrop(el){
+  if(!el)return;var depth=0;
+  el.addEventListener('dragenter',function(e){if(!isFileDrag(e))return;e.preventDefault();depth++;el.classList.add('cap-drag');});
+  el.addEventListener('dragover',function(e){if(!isFileDrag(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';});
+  el.addEventListener('dragleave',function(e){if(!isFileDrag(e))return;depth=Math.max(0,depth-1);if(!depth)el.classList.remove('cap-drag');});
+  el.addEventListener('drop',function(e){
+    if(!isFileDrag(e))return;e.preventDefault();e.stopPropagation();depth=0;el.classList.remove('cap-drag');
+    if(!ready){say('起動中です。少し待ってからもう一度お試しください。',true);return;}
+    handleKeyFile(e.dataTransfer.files&&e.dataTransfer.files[0]);});
+}
+bindDrop(btnEl);bindDrop(toggleEl);bindDrop(dropEl);
+function setArea(open){
+  if(!toggleEl||!areaEl)return;
+  areaEl.classList.toggle('open',open);areaEl.setAttribute('aria-hidden',open?'false':'true');
+  toggleEl.setAttribute('aria-expanded',open?'true':'false');
+  var l=open?'インポートのエリアを閉じる':'インポートのエリアを開く';toggleEl.title=l;toggleEl.setAttribute('aria-label',l);}
+if(toggleEl)toggleEl.addEventListener('click',function(){setArea(!areaEl.classList.contains('open'));});
+if(dropEl){
+  dropEl.addEventListener('click',function(){btnEl.click();});
+  dropEl.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();btnEl.click();}});}
 
 /* ---- 起動時: 保存した鍵で、暗号化ファイルを取得→復号→起動 ---- */
 function boot(){ready=true;keys=loadKeys();
