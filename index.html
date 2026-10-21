@@ -752,6 +752,7 @@ body.vp-recording .capture-frame{box-shadow:none !important}
           </select>
         </div>
         <button class="chip" id="capLightReset" type="button">光編集をリセット</button>
+
       </div>
       <div class="subsection collapsed cap-image-overlay-box" id="capImageOverlayBox">
         <h3>撮影エフェクト</h3>
@@ -889,6 +890,16 @@ body.vp-recording .capture-frame{box-shadow:none !important}
       <div class="progress-wrap" id="exportProgressWrap"><div class="progress-bar" id="exportProgressBar"></div></div>
       <div id="exportStatus" style="font-size:11px;color:var(--ink-faint);margin-top:8px;line-height:1.5;"></div>
     </div>
+    <div class="section collapsed" id="capPluginBox">
+      <h2>プラグイン</h2>
+          <div style="font-size:10.5px;color:var(--ink-faint);line-height:1.6;margin-bottom:10px;">プラグインのファイル（.js）を読み込むと、光編集に機能を追加できます。読み込んだプラグインは、サイトを閉じて再度開いても設定済みの状態で動作します。</div>
+          <div class="btn-row" style="margin-bottom:8px;"><button class="chip" id="capPluginImport" type="button">プラグインを読み込む</button></div>
+          <input type="file" id="capPluginFile" accept=".js,.vrmplugin,text/javascript,application/javascript" style="display:none" />
+          <div id="capPluginMsg" style="font-size:10.5px;color:var(--ink-faint);min-height:14px;margin-bottom:6px;line-height:1.5;"></div>
+          <div id="capPluginEmpty" style="font-size:11px;color:var(--ink-faint);padding:6px 0;">導入済みのプラグインはありません。</div>
+          <div id="capPluginList"></div>
+    </div>
+
 
     <footer class="credit">
       読み込んだアバターはこの端末内でのみ処理され、外部には送信されません。
@@ -1048,6 +1059,29 @@ body.vp-recording .capture-frame{box-shadow:none !important}
     <div class="vrm-load-actions">
       <button class="chip" id="vrmLoadCancel">キャンセル</button>
       <button class="chip active" id="vrmLoadConfirm">確認して読み込む</button>
+    </div>
+  </div>
+</div>
+
+<div class="vrm-load-modal" id="capPluginImportModal" aria-hidden="true">
+  <div class="vrm-load-dialog" role="dialog" aria-modal="true" aria-labelledby="capPluginImportTitle">
+    <h3 id="capPluginImportTitle">プラグインをインポート</h3>
+    <p class="vrm-load-warning" id="capPluginImportQuestion"></p>
+    <div class="vrm-load-info" id="capPluginImportInfo"></div>
+    <div class="vrm-load-actions">
+      <button class="chip" id="capPluginImportCancel" type="button">キャンセル</button>
+      <button class="chip active" id="capPluginImportOk" type="button">インポートする</button>
+    </div>
+  </div>
+</div>
+
+<div class="vrm-load-modal" id="capPluginDeleteModal" aria-hidden="true">
+  <div class="vrm-load-dialog" role="dialog" aria-modal="true" aria-labelledby="capPluginDeleteTitle">
+    <h3 id="capPluginDeleteTitle">プラグインを削除</h3>
+    <p class="vrm-load-warning" id="capPluginDeleteQuestion" style="white-space:pre-line;margin-bottom:0;"></p>
+    <div class="vrm-load-actions">
+      <button class="chip" id="capPluginDeleteCancel" type="button">キャンセル</button>
+      <button class="chip active" id="capPluginDeleteOk" type="button">削除する</button>
     </div>
   </div>
 </div>
@@ -5060,7 +5094,7 @@ let v=parseFloat(num.value);if(Number.isNaN(v)){num.value=range.value;return;}
 const min=range.min!==''?parseFloat(range.min):-Infinity;const max=range.max!==''?parseFloat(range.max):Infinity;v=Math.min(max,Math.max(min,v));num.value=v;if(String(v)!==range.value){range.value=String(v);range.dispatchEvent(new Event('input',{bubbles:true}));range.dispatchEvent(new Event('change',{bubbles:true}));}}
 num.addEventListener('change',commit);num.addEventListener('keydown',(e)=>{if(e.key==='Enter'){commit();num.blur();}});num.addEventListener('click',(e)=>e.stopPropagation());range.dataset.numWired='1';}
 function wireAllSliderNumberInputs(root){(root||document).querySelectorAll('input[type="range"]').forEach(wireSliderNumberInput);}
-wireAllSliderNumberInputs();const sliderNumObserver=new MutationObserver((mutations)=>{mutations.forEach((m)=>{m.addedNodes.forEach((node)=>{if(node.nodeType!==1)return;if(node.matches&&node.matches('input[type="range"]'))wireSliderNumberInput(node);if(node.querySelectorAll)wireAllSliderNumberInputs(node);});});});sliderNumObserver.observe(document.body,{childList:true,subtree:true});</script>
+wireAllSliderNumberInputs();const sliderNumObserver=new MutationObserver((mutations)=>{mutations.forEach((m)=>{m.addedNodes.forEach((node)=>{if(node.nodeType!==1)return;if(node.matches&&node.matches('input[type="range"]'))wireSliderNumberInput(node);if(node.querySelectorAll)wireAllSliderNumberInputs(node);});});});sliderNumObserver.observe(document.body,{childList:true,subtree:true});window.VRMEC={THREE,scene,renderer,camera,controls,getVrm:()=>currentVrm};window.dispatchEvent(new Event('vrmec-ready'));</script>
 
 
 
@@ -5546,6 +5580,134 @@ wireAllSliderNumberInputs();const sliderNumObserver=new MutationObserver((mutati
   }
   if(stopBtn&&tbRec)stopBtn.addEventListener('click',function(){tbRec.click();});
   sync();
+})();
+</script>
+<script>
+/* ===== プラグイン基盤（光編集 > プラグイン） ===== */
+(function(){
+'use strict';
+var KEY='vrmPluginsV1',DATA='vrmPluginData:';
+var installed=[],entries={},pending=null,ready=false;
+var listEl=document.getElementById('capPluginList'),emptyEl=document.getElementById('capPluginEmpty'),
+    fileEl=document.getElementById('capPluginFile'),btnEl=document.getElementById('capPluginImport'),msgEl=document.getElementById('capPluginMsg');
+if(!listEl||!fileEl||!btnEl)return;
+
+window.VRMPlugins={version:1,register:function(m){
+  if(!m||!m.id||typeof m.mount!=='function')throw new Error('プラグイン定義が不正です');
+  pending=m;}};
+
+function loadStore(){try{var a=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}}
+function saveStore(){try{localStorage.setItem(KEY,JSON.stringify(installed));return true;}catch(e){return false;}}
+function say(t,err){if(!msgEl)return;msgEl.textContent=t||'';msgEl.style.color=err?'var(--error)':'var(--ink-faint)';}
+function runSource(src){pending=null;new Function(src)();var m=pending;pending=null;
+  if(!m)throw new Error('プラグインが register() を呼んでいません');return m;}
+function storageFor(id){return{
+  get:function(k,d){try{var v=localStorage.getItem(DATA+id+':'+k);return v===null?d:JSON.parse(v);}catch(e){return d;}},
+  set:function(k,v){try{localStorage.setItem(DATA+id+':'+k,JSON.stringify(v));}catch(e){}}};}
+function updateEmpty(){if(emptyEl)emptyEl.style.display=Object.keys(entries).length?'none':'block';}
+
+function mountEntry(rec){
+  var old=entries[rec.id];if(old)removeEntry(rec.id,true);
+  var wrap=document.createElement('div');
+  wrap.style.cssText='border:1px solid var(--line-strong);border-radius:var(--radius);margin-bottom:8px;background:var(--panel-2)';
+  var head=document.createElement('div');
+  head.style.cssText='display:flex;align-items:center;gap:6px;padding:8px 10px;cursor:pointer;user-select:none';
+  var name=document.createElement('span');name.style.cssText='font-size:12px;color:var(--ink);flex:1;min-width:0';
+  name.textContent=rec.name+(rec.version?'  v'+rec.version:'');
+  var del=document.createElement('button');del.type='button';del.className='chip';del.textContent='削除';
+  del.style.cssText+=';padding:3px 8px;font-size:11px';
+  head.appendChild(name);head.appendChild(del);
+  var body=document.createElement('div');body.style.cssText='padding:4px 10px 10px;display:none';
+  if(rec.description){var d=document.createElement('div');d.style.cssText='font-size:10.5px;color:var(--ink-faint);line-height:1.6;margin-bottom:8px';d.textContent=rec.description;body.appendChild(d);}
+  var host=document.createElement('div');body.appendChild(host);
+  head.addEventListener('click',function(){body.style.display=body.style.display==='none'?'block':'none';});
+  del.addEventListener('click',function(e){e.stopPropagation();
+    askDelete(rec,function(ok){if(ok)removeEntry(rec.id,false);});});
+  wrap.appendChild(head);wrap.appendChild(body);listEl.appendChild(wrap);
+  var e={wrap:wrap,host:host,instance:null};entries[rec.id]=e;
+  try{
+    var m=runSource(rec.source);
+    var E=window.VRMEC;
+    e.instance=m.mount({THREE:E.THREE,scene:E.scene,renderer:E.renderer,camera:E.camera,controls:E.controls,
+      getVrm:E.getVrm,container:host,storage:storageFor(rec.id)})||null;
+  }catch(err){
+    console.error('plugin error',rec.id,err);
+    var p=document.createElement('div');p.style.cssText='font-size:11px;color:var(--error)';
+    p.textContent='プラグインの起動に失敗しました: '+(err&&err.message||err);host.appendChild(p);body.style.display='block';}
+  updateEmpty();
+}
+
+function removeEntry(id,keepRecord){
+  var e=entries[id];
+  if(e){try{if(e.instance&&e.instance.unmount)e.instance.unmount();}catch(err){console.warn(err);}
+    if(e.wrap.parentNode)e.wrap.parentNode.removeChild(e.wrap);delete entries[id];}
+  if(!keepRecord){installed=installed.filter(function(r){return r.id!==id;});saveStore();say('プラグインを削除しました。');}
+  updateEmpty();
+}
+
+var mEl=document.getElementById('capPluginImportModal'),mQ=document.getElementById('capPluginImportQuestion'),
+    mInfo=document.getElementById('capPluginImportInfo'),mOk=document.getElementById('capPluginImportOk'),
+    mCancel=document.getElementById('capPluginImportCancel'),mCb=null;
+function infoRow(k,v){var r=document.createElement('div');r.style.cssText='display:flex;gap:12px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.6';
+  var a=document.createElement('span');a.style.cssText='flex:0 0 84px;color:var(--ink-faint)';a.textContent=k;
+  var b=document.createElement('span');b.style.cssText='flex:1;min-width:0;color:var(--ink);word-break:break-word';b.textContent=v;
+  r.appendChild(a);r.appendChild(b);return r;}
+function closeAsk(ok){if(!mEl.classList.contains('open'))return;mEl.classList.remove('open');mEl.setAttribute('aria-hidden','true');
+  var cb=mCb;mCb=null;if(cb)cb(ok);}
+function askImport(rec,fileName,cb){
+  mCb=cb;mQ.textContent='「'+rec.name+'」をインポートしますか？　読み込んだプラグインのコードはそのまま実行されます。信頼できるファイルのみインポートしてください。';
+  mInfo.innerHTML='';
+  mInfo.appendChild(infoRow('プラグイン名',rec.name));
+  if(rec.version)mInfo.appendChild(infoRow('バージョン',rec.version));
+  if(rec.description)mInfo.appendChild(infoRow('説明',rec.description));
+  if(fileName)mInfo.appendChild(infoRow('ファイル',fileName));
+  if(mInfo.lastChild)mInfo.lastChild.style.borderBottom='0';
+  var dlg=mEl.querySelector('.vrm-load-dialog');if(dlg)dlg.scrollTop=0;
+  mEl.classList.add('open');mEl.setAttribute('aria-hidden','false');mOk.focus({preventScroll:true});}
+mOk.addEventListener('click',function(){closeAsk(true);});
+mCancel.addEventListener('click',function(){closeAsk(false);});
+mEl.addEventListener('click',function(e){if(e.target===mEl)closeAsk(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&mEl.classList.contains('open')){e.stopPropagation();closeAsk(false);}},true);
+
+/* 削除確認（サイト独自のダイアログ。文面は従来の confirm と同じ） */
+var dEl=document.getElementById('capPluginDeleteModal'),dQ=document.getElementById('capPluginDeleteQuestion'),
+    dOk=document.getElementById('capPluginDeleteOk'),dCancel=document.getElementById('capPluginDeleteCancel'),dCb=null;
+function closeDel(ok){if(!dEl.classList.contains('open'))return;dEl.classList.remove('open');dEl.setAttribute('aria-hidden','true');
+  var cb=dCb;dCb=null;if(cb)cb(ok);}
+function askDelete(rec,cb){
+  dCb=cb;dQ.textContent='プラグイン「'+rec.name+'」を削除しますか？';
+  var dlg=dEl.querySelector('.vrm-load-dialog');if(dlg)dlg.scrollTop=0;
+  dEl.classList.add('open');dEl.setAttribute('aria-hidden','false');dOk.focus({preventScroll:true});}
+dOk.addEventListener('click',function(){closeDel(true);});
+dCancel.addEventListener('click',function(){closeDel(false);});
+dEl.addEventListener('click',function(e){if(e.target===dEl)closeDel(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dEl.classList.contains('open')){e.stopPropagation();closeDel(false);}},true);
+
+function commitImport(rec){
+  var i=installed.findIndex(function(r){return r.id===rec.id;});
+  if(i>=0)installed[i]=rec;else installed.push(rec);
+  if(!saveStore()){say('保存に失敗しました（ブラウザの保存容量/プライベートモードを確認してください）。',true);}
+  else say('「'+rec.name+'」をインポートしました。');
+  mountEntry(rec);
+}
+function importText(text,fileName){
+  var m;try{m=runSource(text);}catch(err){say('読み込みに失敗しました: '+(err&&err.message||err),true);return;}
+  var rec={id:String(m.id),name:m.name||String(m.id),version:m.version||'',
+    description:m.description||'',source:text,activatedAt:Date.now()};
+  askImport(rec,fileName,function(ok){if(!ok){say('インポートをキャンセルしました。');return;}commitImport(rec);});
+}
+
+btnEl.addEventListener('click',function(){
+  if(!ready){say('起動中です。少し待ってからもう一度お試しください。',true);return;}
+  fileEl.value='';fileEl.click();});
+fileEl.addEventListener('change',function(){
+  var f=fileEl.files&&fileEl.files[0];if(!f)return;
+  var r=new FileReader();r.onload=function(){importText(String(r.result||''),f.name);};
+  r.onerror=function(){say('ファイルを読み込めませんでした。',true);};r.readAsText(f,'utf-8');});
+
+function boot(){ready=true;installed=loadStore();installed.forEach(mountEntry);updateEmpty();}
+if(window.VRMEC)boot();else window.addEventListener('vrmec-ready',boot,{once:true});
+updateEmpty();
 })();
 </script>
 </body>
