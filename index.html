@@ -3308,9 +3308,15 @@ document.getElementById('tbShotBg').addEventListener('click',takeScreenshotWithB
 return'';}
 const RECORD_FPS=60;
 const RECORD_MAX_PIXELS=Infinity;
-/* ===== 60fps固定(CFR)録画: WebCodecs VideoEncoder + 自前MP4マルチプレクサ =====
-   各フレームのタイムスタンプを n*(1/60)秒に固定して書き出す。描画が間に合わない場合は直前のフレームを複製して60fpsを維持する。
+/* ===== fps固定(CFR)録画: WebCodecs VideoEncoder + 自前MP4マルチプレクサ =====
+   各フレームのタイムスタンプを n*(1/fps)秒に固定して書き出す。描画が間に合わない場合は直前のフレームを複製してfpsを維持する。
+   スマホ、またはPCで出力が1920×1920以内: 30fps固定・約3Mbps。それ以外(PCの大きい出力): 60fps固定。
    非対応ブラウザは従来のMediaRecorder録画にフォールバックする。 */
+let recFps=RECORD_FPS,recBitrate=3_000_000;
+function recSettingsFor(W,H){
+ const small=capIsCoarse()||(W<=1920&&H<=1920);
+ return small?{fps:30,bitrate:3_000_000}:{fps:RECORD_FPS,bitrate:Math.max(6_000_000,Math.min(20_000_000,Math.round(W*H*RECORD_FPS*0.1)))};
+}
 let recCfr=null,recCfrPlan=null,recStarting=false,recCfrFinishing=false;
 function recMp4Build(samples,avcC,W,H,fps){
  const te=new TextEncoder();
@@ -3357,16 +3363,17 @@ async function recPlanCfr(){
  if(typeof VideoEncoder==='undefined'||typeof VideoFrame==='undefined')return null;
  const spec=getCaptureSpec();
  const W=Math.max(2,Math.floor(Math.round(spec.outW)/2)*2),H=Math.max(2,Math.floor(Math.round(spec.outH)/2)*2);
- const fs=Math.ceil(W/16)*Math.ceil(H/16),mbps=fs*RECORD_FPS;
+ const st=recSettingsFor(W,H);recFps=st.fps;recBitrate=st.bitrate;
+ const fs=Math.ceil(W/16)*Math.ceil(H/16),mbps=fs*recFps;
  const levels=[[0x28,8192,245760],[0x2A,8704,522240],[0x32,22080,589824],[0x33,36864,983040],[0x34,36864,2073600]];
  const lv=levels.find(l=>fs<=l[1]&&mbps<=l[2]);
  if(!lv)return null;
  const lh=lv[0].toString(16).toUpperCase().padStart(2,'0');
- const bitrate=Math.max(6_000_000,Math.min(20_000_000,Math.round(W*H*RECORD_FPS*0.1)));
+ const bitrate=recBitrate;
  const hw=capIsCoarse()?'prefer-hardware':'no-preference';
  for(const prof of['6400','4D00','42E0']){
   for(const bm of['constant','variable']){
-   const cfg={codec:'avc1.'+prof+lh,width:W,height:H,bitrate,framerate:RECORD_FPS,avc:{format:'avc'},latencyMode:'realtime',bitrateMode:bm,hardwareAcceleration:hw};
+   const cfg={codec:'avc1.'+prof+lh,width:W,height:H,bitrate,framerate:recFps,avc:{format:'avc'},latencyMode:'realtime',bitrateMode:bm,hardwareAcceleration:hw};
    try{const r=await VideoEncoder.isConfigSupported(cfg);if(r&&r.supported)return Object.assign({},cfg,r.config||{},{width:W,height:H});}catch(e){}
   }
  }
@@ -3390,7 +3397,7 @@ function recCfrDue(now){
  const c=recCfr;if(!c||c.err)return 0;
  if(!c.t0)return 1;
  if(c.enc.encodeQueueSize>8)return 0;
- const iv=1000/RECORD_FPS;
+ const iv=1000/recFps;
  const need=Math.floor((now-c.t0)/iv+0.35)+1-c.count;
  return need>0?Math.min(need,120):0;
 }
@@ -3399,9 +3406,9 @@ function recCfrEmit(n){
  if(c.count===0)c.t0=performance.now();
  for(let i=0;i<n;i++){
   const idx=c.count;
-  const ts=Math.round(idx*1e6/RECORD_FPS),dur=Math.round((idx+1)*1e6/RECORD_FPS)-ts;
+  const ts=Math.round(idx*1e6/recFps),dur=Math.round((idx+1)*1e6/recFps)-ts;
   let vf=null;
-  try{vf=new VideoFrame(recordCanvas,{timestamp:ts,duration:dur});c.enc.encode(vf,{keyFrame:idx%RECORD_FPS===0});}catch(e){c.err=e;}
+  try{vf=new VideoFrame(recordCanvas,{timestamp:ts,duration:dur});c.enc.encode(vf,{keyFrame:idx%recFps===0});}catch(e){c.err=e;}
   if(vf){try{vf.close();}catch(e){}}
   if(c.err)return;
   c.count++;
@@ -3414,7 +3421,7 @@ async function recCfrFinish(){
  try{c.enc.close();}catch(e){}
  try{
   if(c.err||!c.samples.length||!c.avcC)throw(c.err||new Error('no data'));
-  const blob=recMp4Build(c.samples,c.avcC,c.W,c.H,RECORD_FPS);
+  const blob=recMp4Build(c.samples,c.avcC,c.W,c.H,recFps);
   const url=URL.createObjectURL(blob);
   downloadDataUrl(url,recordOutputFilename||makeCaptureFilename('vrm-video','mp4'));
   setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -3437,12 +3444,12 @@ function resetRecordState(){if(recCfr){try{recCfr.enc.close();}catch(e){}recCfr=
 recordCanvas=null;recordCtx=null;recordSpec=null;recordMobile=false;recordLastCall=0;recordAvgDt=0;recordRawCanvas=null;recordLightPool={};recordLightCache={};recordBgCanvas=null;recordBgKey='';recordBgImageRef=null;recordTrack=null;recordNextDraw=0;restoreRecordPixelRatio();}
 function startRecordingBody(){if(isRecording)return;recordMobile=capIsCoarse();recordLastCall=0;recordAvgDt=0;recordOutputFilename=makeCaptureFilename('vrm-video','mp4');const glCanvas=renderer.domElement;if(!recCfrPlan&&!window.MediaRecorder){alert('このブラウザは動画撮影に対応していません。');return;}
 if(!recCfrPlan&&!glCanvas.captureStream){alert('このブラウザはキャンバス動画撮影に対応していません。');return;}
-const spec=getCaptureSpec();let outW=Math.max(2,Math.round(spec.outW));let outH=Math.max(2,Math.round(spec.outH));const shrink=Math.min(1,Math.sqrt(RECORD_MAX_PIXELS/Math.max(1,outW*outH)));outW=Math.max(2,Math.floor(outW*shrink/2)*2);outH=Math.max(2,Math.floor(outH*shrink/2)*2);
+const spec=getCaptureSpec();let outW=Math.max(2,Math.round(spec.outW));let outH=Math.max(2,Math.round(spec.outH));const shrink=Math.min(1,Math.sqrt(RECORD_MAX_PIXELS/Math.max(1,outW*outH)));outW=Math.max(2,Math.floor(outW*shrink/2)*2);outH=Math.max(2,Math.floor(outH*shrink/2)*2);{const st=recSettingsFor(outW,outH);recFps=st.fps;recBitrate=st.bitrate;}
 recordSpec=spec;recordCanvas=document.createElement('canvas');recordCanvas.width=outW;recordCanvas.height=outH;recordCtx=recordCanvas.getContext('2d',{alpha:false});if(!recordCtx){resetRecordState();alert('動画撮影用キャンバスを作成できませんでした。');return;}
 recCfr=recCfrPlan?recCfrBegin(recCfrPlan,outW,outH):null;if(!recCfr){recordMimeType=pickRecordingMimeType(recordMobile);if(!recordMimeType){resetRecordState();alert('このブラウザではMP4（H.264）動画を録画できません。Chrome / Edgeなど、MP4のMediaRecorderに対応したブラウザでお試しください。');return;}
-let stream=recordCanvas.captureStream(0);let track=stream.getVideoTracks()[0];if(!track||typeof track.requestFrame!=='function'){stream.getTracks().forEach(t=>t.stop());stream=recordCanvas.captureStream(RECORD_FPS);track=null;}
+let stream=recordCanvas.captureStream(0);let track=stream.getVideoTracks()[0];if(!track||typeof track.requestFrame!=='function'){stream.getTracks().forEach(t=>t.stop());stream=recordCanvas.captureStream(recFps);track=null;}
 recordTrack=track;recordCanvas._recordStream=stream;
-try{const videoBitsPerSecond=Math.max(6_000_000,Math.min(24_000_000,Math.round(outW*outH*RECORD_FPS*0.1)));mediaRecorder=new MediaRecorder(stream,{mimeType:recordMimeType,videoBitsPerSecond,});}catch(err){resetRecordState();alert('MP4動画の録画を開始できませんでした。');return;}
+try{const videoBitsPerSecond=recBitrate;mediaRecorder=new MediaRecorder(stream,{mimeType:recordMimeType,videoBitsPerSecond,});}catch(err){resetRecordState();alert('MP4動画の録画を開始できませんでした。');return;}
 recordChunks=[];mediaRecorder.ondataavailable=(e)=>{if(e.data&&e.data.size)recordChunks.push(e.data);};mediaRecorder.onstop=()=>{const blob=new Blob(recordChunks,{type:recordMimeType||'video/mp4'});const url=URL.createObjectURL(blob);downloadDataUrl(url,recordOutputFilename||makeCaptureFilename('vrm-video','mp4'));setTimeout(()=>URL.revokeObjectURL(url),1000);recordChunks=[];resetRecordState();};}
 const curRatio=renderer.getPixelRatio();const wantRatio=outW/Math.max(1,spec.frame.w);if(wantRatio<curRatio-0.01){recordSavedPixelRatio=curRatio;renderer.setPixelRatio(Math.max(0.5,wantRatio));}
 else if(recordMobile&&spec.cropped&&wantRatio>curRatio+0.01){
@@ -3453,9 +3460,9 @@ else if(recordMobile&&spec.cropped&&wantRatio>curRatio+0.01){
  if(r>curRatio+0.01){recordSavedPixelRatio=curRatio;renderer.setPixelRatio(r);}
 }
 try{hairOverlaySetHidden(true);}catch(_){}renderer.render(scene,camera);if(recCfr){recCfr.count=0;recCfr.t0=0;}else{mediaRecorder.start();}isRecording=true;if(recordMobile){const pv=document.getElementById('capLightPreviewCanvas');if(pv)pv.style.display='none';}drawRecordingFrame(true);tbRecordBtn.textContent='■ 停止';tbRecordBtn.classList.add('active');recIndicatorEl.classList.add('show');}
-function drawRecordingFrame(force){if(!recordCtx||!recordCanvas||!recordSpec)return;const now=performance.now();const interval=1000/RECORD_FPS;let cfrNeed=0;if(recCfr){cfrNeed=force?1:recCfrDue(now);if(cfrNeed<=0)return;}else if(force){recordNextDraw=now+interval;}else{
+function drawRecordingFrame(force){if(!recordCtx||!recordCanvas||!recordSpec)return;const now=performance.now();const interval=1000/recFps;let cfrNeed=0;if(recCfr){cfrNeed=force?1:recCfrDue(now);if(cfrNeed<=0)return;}else if(force){recordNextDraw=now+interval;}else{
  // Mobile only: on ~60Hz displays draw on every animation frame so frame spacing stays even (no skipped/doubled frames).
- let passThrough=false;if(recordMobile){const dt=recordLastCall?now-recordLastCall:0;recordLastCall=now;if(dt>0)recordAvgDt=recordAvgDt?recordAvgDt*.9+dt*.1:dt;passThrough=recordAvgDt>12.5&&recordAvgDt<21;}
+ let passThrough=false;if(recordMobile){const dt=recordLastCall?now-recordLastCall:0;recordLastCall=now;if(dt>0)recordAvgDt=recordAvgDt?recordAvgDt*.9+dt*.1:dt;passThrough=recFps>=60&&recordAvgDt>12.5&&recordAvgDt<21;}
  if(!passThrough&&now<recordNextDraw-2)return;recordNextDraw=(now-recordNextDraw<interval*2)?recordNextDraw+interval:now+interval;}
 const glCanvas=renderer.domElement;const fullW=glCanvas.width;const fullH=glCanvas.height;if(!fullW||!fullH)return;const spec=recordSpec;const W=recordCanvas.width;const H=recordCanvas.height;let sx=0,sy=0,sw=fullW,sh=fullH;
 if(spec.cropped){const ratioX=fullW/Math.max(1,spec.cssW);const ratioY=fullH/Math.max(1,spec.cssH);sx=Math.round(spec.frame.x*ratioX);sy=Math.round(spec.frame.y*ratioY);sw=Math.round(spec.frame.w*ratioX);sh=Math.round(spec.frame.h*ratioY);sx=Math.max(0,Math.min(fullW-1,sx));sy=Math.max(0,Math.min(fullH-1,sy));sw=Math.max(1,Math.min(fullW-sx,sw));sh=Math.max(1,Math.min(fullH-sy,sh));}
