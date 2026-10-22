@@ -3308,20 +3308,142 @@ document.getElementById('tbShotBg').addEventListener('click',takeScreenshotWithB
 return'';}
 const RECORD_FPS=60;
 const RECORD_MAX_PIXELS=Infinity;
+/* ===== 60fps固定(CFR)録画: WebCodecs VideoEncoder + 自前MP4マルチプレクサ =====
+   各フレームのタイムスタンプを n*(1/60)秒に固定して書き出す。描画が間に合わない場合は直前のフレームを複製して60fpsを維持する。
+   非対応ブラウザは従来のMediaRecorder録画にフォールバックする。 */
+let recCfr=null,recCfrPlan=null,recStarting=false,recCfrFinishing=false;
+function recMp4Build(samples,avcC,W,H,fps){
+ const te=new TextEncoder();
+ const u32=v=>[(v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255];
+ const u16=v=>[(v>>>8)&255,v&255];
+ const zeros=k=>new Uint8Array(k);
+ const cat=(arr)=>{let n=0;for(const x of arr)n+=x.length;const o=new Uint8Array(n);let p=0;for(const x of arr){o.set(x,p);p+=x.length;}return o;};
+ const box=(t,...parts)=>{const body=cat(parts.map(x=>x instanceof Uint8Array?x:new Uint8Array(x)));return cat([new Uint8Array(u32(body.length+8)),te.encode(t),body]);};
+ const n=samples.length,TS=fps*1000,DELTA=1000,dur=n*DELTA,durMs=Math.round(n*1000/fps);
+ const ct=Math.floor(Date.now()/1000)+2082844800;
+ const matrix=[0x00010000,0,0,0,0x00010000,0,0,0,0x40000000].flatMap(u32);
+ const ftyp=box('ftyp',te.encode('isom'),u32(512),te.encode('isom'),te.encode('iso2'),te.encode('avc1'),te.encode('mp41'));
+ const keys=[];samples.forEach((s,i)=>{if(s.k)keys.push(i+1);});
+ if(!keys.length||keys[0]!==1)keys.unshift(1);
+ const sizes=samples.map(s=>s.d.length);
+ const moov=(off)=>{
+  const mvhd=box('mvhd',u32(0),u32(ct),u32(ct),u32(1000),u32(durMs),u32(0x00010000),u16(0x0100),zeros(10),matrix,zeros(24),u32(2));
+  const tkhd=box('tkhd',u32(3),u32(ct),u32(ct),u32(1),u32(0),u32(durMs),zeros(8),u16(0),u16(0),u16(0),u16(0),matrix,u32(W*65536),u32(H*65536));
+  const mdhd=box('mdhd',u32(0),u32(ct),u32(ct),u32(TS),u32(dur),u16(0x55C4),u16(0));
+  const hdlr=box('hdlr',u32(0),u32(0),te.encode('vide'),zeros(12),te.encode('VideoHandler\0'));
+  const vmhd=box('vmhd',u32(1),u16(0),zeros(6));
+  const dinf=box('dinf',box('dref',u32(0),u32(1),box('url ',u32(1))));
+  const avc1=box('avc1',zeros(6),u16(1),u16(0),u16(0),zeros(12),u16(W),u16(H),u32(0x00480000),u32(0x00480000),u32(0),u16(1),zeros(32),u16(0x18),u16(0xFFFF),box('avcC',avcC));
+  const stsd=box('stsd',u32(0),u32(1),avc1);
+  const stts=box('stts',u32(0),u32(1),u32(n),u32(DELTA));
+  const stss=box('stss',u32(0),u32(keys.length),keys.flatMap(u32));
+  const stsc=box('stsc',u32(0),u32(1),u32(1),u32(n),u32(1));
+  const stsz=box('stsz',u32(0),u32(0),u32(n),sizes.flatMap(u32));
+  const stco=box('stco',u32(0),u32(1),u32(off));
+  const stbl=box('stbl',stsd,stts,stss,stsc,stsz,stco);
+  const minf=box('minf',vmhd,dinf,stbl);
+  const mdia=box('mdia',mdhd,hdlr,minf);
+  const trak=box('trak',tkhd,mdia);
+  return box('moov',mvhd,trak);
+ };
+ const total=sizes.reduce((a,b)=>a+b,0);
+ if(total+8>=4294967296)throw new Error('too large');
+ const m0=moov(0);
+ const m1=moov(ftyp.length+m0.length+8);
+ const mdatHead=cat([new Uint8Array(u32(total+8)),te.encode('mdat')]);
+ return new Blob([ftyp,m1,mdatHead,...samples.map(s=>s.d)],{type:'video/mp4'});
+}
+async function recPlanCfr(){
+ if(typeof VideoEncoder==='undefined'||typeof VideoFrame==='undefined')return null;
+ const spec=getCaptureSpec();
+ const W=Math.max(2,Math.floor(Math.round(spec.outW)/2)*2),H=Math.max(2,Math.floor(Math.round(spec.outH)/2)*2);
+ const fs=Math.ceil(W/16)*Math.ceil(H/16),mbps=fs*RECORD_FPS;
+ const levels=[[0x28,8192,245760],[0x2A,8704,522240],[0x32,22080,589824],[0x33,36864,983040],[0x34,36864,2073600]];
+ const lv=levels.find(l=>fs<=l[1]&&mbps<=l[2]);
+ if(!lv)return null;
+ const lh=lv[0].toString(16).toUpperCase().padStart(2,'0');
+ const bitrate=Math.max(6_000_000,Math.min(20_000_000,Math.round(W*H*RECORD_FPS*0.1)));
+ const hw=capIsCoarse()?'prefer-hardware':'no-preference';
+ for(const prof of['6400','4D00','42E0']){
+  for(const bm of['constant','variable']){
+   const cfg={codec:'avc1.'+prof+lh,width:W,height:H,bitrate,framerate:RECORD_FPS,avc:{format:'avc'},latencyMode:'realtime',bitrateMode:bm,hardwareAcceleration:hw};
+   try{const r=await VideoEncoder.isConfigSupported(cfg);if(r&&r.supported)return Object.assign({},cfg,r.config||{},{width:W,height:H});}catch(e){}
+  }
+ }
+ return null;
+}
+function recCfrBegin(cfg,W,H){
+ try{
+  const c={W,H,samples:[],avcC:null,count:0,t0:0,err:null,enc:null};
+  c.enc=new VideoEncoder({
+   output:(chunk,meta)=>{
+    if(!c.avcC&&meta&&meta.decoderConfig&&meta.decoderConfig.description){const d=meta.decoderConfig.description;c.avcC=new Uint8Array(d instanceof ArrayBuffer?d.slice(0):new Uint8Array(d.buffer,d.byteOffset,d.byteLength).slice());}
+    const buf=new Uint8Array(chunk.byteLength);chunk.copyTo(buf);c.samples.push({d:buf,k:chunk.type==='key'});
+   },
+   error:(e)=>{c.err=e;}
+  });
+  c.enc.configure(Object.assign({},cfg,{width:W,height:H}));
+  return c;
+ }catch(e){return null;}
+}
+function recCfrDue(now){
+ const c=recCfr;if(!c||c.err)return 0;
+ if(!c.t0)return 1;
+ if(c.enc.encodeQueueSize>8)return 0;
+ const iv=1000/RECORD_FPS;
+ const need=Math.floor((now-c.t0)/iv+0.35)+1-c.count;
+ return need>0?Math.min(need,120):0;
+}
+function recCfrEmit(n){
+ const c=recCfr;if(!c||c.err||!recordCanvas)return;
+ if(c.count===0)c.t0=performance.now();
+ for(let i=0;i<n;i++){
+  const idx=c.count;
+  const ts=Math.round(idx*1e6/RECORD_FPS),dur=Math.round((idx+1)*1e6/RECORD_FPS)-ts;
+  let vf=null;
+  try{vf=new VideoFrame(recordCanvas,{timestamp:ts,duration:dur});c.enc.encode(vf,{keyFrame:idx%RECORD_FPS===0});}catch(e){c.err=e;}
+  if(vf){try{vf.close();}catch(e){}}
+  if(c.err)return;
+  c.count++;
+ }
+}
+async function recCfrFinish(){
+ const c=recCfr;recCfr=null;if(!c){resetRecordState();return;}
+ recCfrFinishing=true;
+ try{await c.enc.flush();}catch(e){c.err=c.err||e;}
+ try{c.enc.close();}catch(e){}
+ try{
+  if(c.err||!c.samples.length||!c.avcC)throw(c.err||new Error('no data'));
+  const blob=recMp4Build(c.samples,c.avcC,c.W,c.H,RECORD_FPS);
+  const url=URL.createObjectURL(blob);
+  downloadDataUrl(url,recordOutputFilename||makeCaptureFilename('vrm-video','mp4'));
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+ }catch(e){alert('動画の書き出しに失敗しました。');}
+ recCfrFinishing=false;
+ resetRecordState();
+}
+async function startRecording(){
+ if(isRecording||recStarting||recCfrFinishing)return;
+ recStarting=true;
+ try{recCfrPlan=await recPlanCfr();}catch(e){recCfrPlan=null;}
+ recStarting=false;
+ startRecordingBody();
+}
+
 let recordMobile=false;let recordLastCall=0,recordAvgDt=0;let recordRawCanvas=null;let recordLightPool={};let recordLightCache={};function capIsCoarse(){try{return window.matchMedia('(pointer: coarse)').matches;}catch(e){return false;}}
 let recordBgCanvas=null;let recordBgKey='';let recordBgImageRef=null;let recordTrack=null;let recordNextDraw=0;let recordSavedPixelRatio=null;
 function restoreRecordPixelRatio(){if(recordSavedPixelRatio===null)return;const r=recordSavedPixelRatio;recordSavedPixelRatio=null;renderer.setPixelRatio(r);resize();}
-function resetRecordState(){if(recordCanvas&&recordCanvas._recordStream){try{recordCanvas._recordStream.getTracks().forEach(track=>track.stop());}catch(e){}}
+function resetRecordState(){if(recCfr){try{recCfr.enc.close();}catch(e){}recCfr=null;}if(recordCanvas&&recordCanvas._recordStream){try{recordCanvas._recordStream.getTracks().forEach(track=>track.stop());}catch(e){}}
 recordCanvas=null;recordCtx=null;recordSpec=null;recordMobile=false;recordLastCall=0;recordAvgDt=0;recordRawCanvas=null;recordLightPool={};recordLightCache={};recordBgCanvas=null;recordBgKey='';recordBgImageRef=null;recordTrack=null;recordNextDraw=0;restoreRecordPixelRatio();}
-function startRecording(){if(isRecording)return;recordMobile=capIsCoarse();recordLastCall=0;recordAvgDt=0;recordOutputFilename=makeCaptureFilename('vrm-video','mp4');const glCanvas=renderer.domElement;if(!window.MediaRecorder){alert('このブラウザは動画撮影に対応していません。');return;}
-if(!glCanvas.captureStream){alert('このブラウザはキャンバス動画撮影に対応していません。');return;}
+function startRecordingBody(){if(isRecording)return;recordMobile=capIsCoarse();recordLastCall=0;recordAvgDt=0;recordOutputFilename=makeCaptureFilename('vrm-video','mp4');const glCanvas=renderer.domElement;if(!recCfrPlan&&!window.MediaRecorder){alert('このブラウザは動画撮影に対応していません。');return;}
+if(!recCfrPlan&&!glCanvas.captureStream){alert('このブラウザはキャンバス動画撮影に対応していません。');return;}
 const spec=getCaptureSpec();let outW=Math.max(2,Math.round(spec.outW));let outH=Math.max(2,Math.round(spec.outH));const shrink=Math.min(1,Math.sqrt(RECORD_MAX_PIXELS/Math.max(1,outW*outH)));outW=Math.max(2,Math.floor(outW*shrink/2)*2);outH=Math.max(2,Math.floor(outH*shrink/2)*2);
 recordSpec=spec;recordCanvas=document.createElement('canvas');recordCanvas.width=outW;recordCanvas.height=outH;recordCtx=recordCanvas.getContext('2d',{alpha:false});if(!recordCtx){resetRecordState();alert('動画撮影用キャンバスを作成できませんでした。');return;}
-recordMimeType=pickRecordingMimeType(recordMobile);if(!recordMimeType){resetRecordState();alert('このブラウザではMP4（H.264）動画を録画できません。Chrome / Edgeなど、MP4のMediaRecorderに対応したブラウザでお試しください。');return;}
+recCfr=recCfrPlan?recCfrBegin(recCfrPlan,outW,outH):null;if(!recCfr){recordMimeType=pickRecordingMimeType(recordMobile);if(!recordMimeType){resetRecordState();alert('このブラウザではMP4（H.264）動画を録画できません。Chrome / Edgeなど、MP4のMediaRecorderに対応したブラウザでお試しください。');return;}
 let stream=recordCanvas.captureStream(0);let track=stream.getVideoTracks()[0];if(!track||typeof track.requestFrame!=='function'){stream.getTracks().forEach(t=>t.stop());stream=recordCanvas.captureStream(RECORD_FPS);track=null;}
 recordTrack=track;recordCanvas._recordStream=stream;
 try{const videoBitsPerSecond=Math.max(6_000_000,Math.min(24_000_000,Math.round(outW*outH*RECORD_FPS*0.1)));mediaRecorder=new MediaRecorder(stream,{mimeType:recordMimeType,videoBitsPerSecond,});}catch(err){resetRecordState();alert('MP4動画の録画を開始できませんでした。');return;}
-recordChunks=[];mediaRecorder.ondataavailable=(e)=>{if(e.data&&e.data.size)recordChunks.push(e.data);};mediaRecorder.onstop=()=>{const blob=new Blob(recordChunks,{type:recordMimeType||'video/mp4'});const url=URL.createObjectURL(blob);downloadDataUrl(url,recordOutputFilename||makeCaptureFilename('vrm-video','mp4'));setTimeout(()=>URL.revokeObjectURL(url),1000);recordChunks=[];resetRecordState();};
+recordChunks=[];mediaRecorder.ondataavailable=(e)=>{if(e.data&&e.data.size)recordChunks.push(e.data);};mediaRecorder.onstop=()=>{const blob=new Blob(recordChunks,{type:recordMimeType||'video/mp4'});const url=URL.createObjectURL(blob);downloadDataUrl(url,recordOutputFilename||makeCaptureFilename('vrm-video','mp4'));setTimeout(()=>URL.revokeObjectURL(url),1000);recordChunks=[];resetRecordState();};}
 const curRatio=renderer.getPixelRatio();const wantRatio=outW/Math.max(1,spec.frame.w);if(wantRatio<curRatio-0.01){recordSavedPixelRatio=curRatio;renderer.setPixelRatio(Math.max(0.5,wantRatio));}
 else if(recordMobile&&spec.cropped&&wantRatio>curRatio+0.01){
  // Mobile only: render the crop area at the output resolution so it is not upscaled (blurry) afterwards.
@@ -3330,8 +3452,8 @@ else if(recordMobile&&spec.cropped&&wantRatio>curRatio+0.01){
  const r=Math.min(wantRatio,3,maxDim/Math.max(cw,ch),Math.sqrt(5000000/(cw*ch)));
  if(r>curRatio+0.01){recordSavedPixelRatio=curRatio;renderer.setPixelRatio(r);}
 }
-try{hairOverlaySetHidden(true);}catch(_){}renderer.render(scene,camera);mediaRecorder.start();isRecording=true;if(recordMobile){const pv=document.getElementById('capLightPreviewCanvas');if(pv)pv.style.display='none';}drawRecordingFrame(true);tbRecordBtn.textContent='■ 停止';tbRecordBtn.classList.add('active');recIndicatorEl.classList.add('show');}
-function drawRecordingFrame(force){if(!recordCtx||!recordCanvas||!recordSpec)return;const now=performance.now();const interval=1000/RECORD_FPS;if(force){recordNextDraw=now+interval;}else{
+try{hairOverlaySetHidden(true);}catch(_){}renderer.render(scene,camera);if(recCfr){recCfr.count=0;recCfr.t0=0;}else{mediaRecorder.start();}isRecording=true;if(recordMobile){const pv=document.getElementById('capLightPreviewCanvas');if(pv)pv.style.display='none';}drawRecordingFrame(true);tbRecordBtn.textContent='■ 停止';tbRecordBtn.classList.add('active');recIndicatorEl.classList.add('show');}
+function drawRecordingFrame(force){if(!recordCtx||!recordCanvas||!recordSpec)return;const now=performance.now();const interval=1000/RECORD_FPS;let cfrNeed=0;if(recCfr){cfrNeed=force?1:recCfrDue(now);if(cfrNeed<=0)return;}else if(force){recordNextDraw=now+interval;}else{
  // Mobile only: on ~60Hz displays draw on every animation frame so frame spacing stays even (no skipped/doubled frames).
  let passThrough=false;if(recordMobile){const dt=recordLastCall?now-recordLastCall:0;recordLastCall=now;if(dt>0)recordAvgDt=recordAvgDt?recordAvgDt*.9+dt*.1:dt;passThrough=recordAvgDt>12.5&&recordAvgDt<21;}
  if(!passThrough&&now<recordNextDraw-2)return;recordNextDraw=(now-recordNextDraw<interval*2)?recordNextDraw+interval:now+interval;}
@@ -3354,8 +3476,8 @@ if(rawCtx){
  const litFrame=applyCaptureLightEffects(rawFrame,{pool:recordLightPool,cache:recordMobile?recordLightCache:null,gpu:recordMobile,maxWork:recordMobile?480:720});
  ctx.drawImage(litFrame,0,0,W,H);
 }
-if(recordTrack){try{recordTrack.requestFrame();}catch(e){}}}
-function stopRecording(){if(!isRecording)return;isRecording=false;tbRecordBtn.textContent='▶ 動画';tbRecordBtn.classList.remove('active');recIndicatorEl.classList.remove('show');if(mediaRecorder&&mediaRecorder.state!=='inactive'){mediaRecorder.stop();}restoreRecordPixelRatio();try{scheduleCapLightPreview();}catch(e){}}
+if(recCfr){recCfrEmit(cfrNeed);}if(recordTrack){try{recordTrack.requestFrame();}catch(e){}}}
+function stopRecording(){if(!isRecording)return;isRecording=false;tbRecordBtn.textContent='▶ 動画';tbRecordBtn.classList.remove('active');recIndicatorEl.classList.remove('show');if(recCfr){recCfrFinish();}else if(mediaRecorder&&mediaRecorder.state!=='inactive'){mediaRecorder.stop();}restoreRecordPixelRatio();try{scheduleCapLightPreview();}catch(e){}}
 tbRecordBtn.addEventListener('click',()=>{if(isRecording)stopRecording();else startRecording();});function drawCustomSizedBgImage(ctx,img,w,h){const iw=img.naturalWidth||img.width;const ih=img.naturalHeight||img.height;if(!iw||!ih)return;const dw=(bgImgWidthPct/100)*w;const dh=(bgImgHeightPct/100)*h;ctx.drawImage(img,(w-dw)/2,(h-dh)/2,dw,dh);}
 function drawCaptureBackground(ctx,w,h){if(customBgImage){drawCustomSizedBgImage(ctx,customBgImage,w,h);}else if(currentBgMode==='studio'){const g=ctx.createRadialGradient(w*0.5,h*0.3,0,w*0.5,h*0.3,Math.max(w,h)*0.72);g.addColorStop(0,'#2a2536');g.addColorStop(1,'#17151d');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);}else if(currentBgMode==='dawn'){const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#3a2e4a');g.addColorStop(0.45,'#6b4a5c');g.addColorStop(1,'#c47a5a');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);}else if(currentBgMode==='custom'){ctx.fillStyle=customBgColor;ctx.fillRect(0,0,w,h);}else{ctx.fillStyle='#0d0c12';ctx.fillRect(0,0,w,h);}}
 function drawCaptureImageOverlay(ctx,sourceW,sourceH,destX=0,destY=0,destW=sourceW,destH=sourceH){const spec=getCapImageOverlaySpec(sourceW,sourceH);if(!spec)return;const imageCanvas=capImageOverlayEnsureProcessedFrame(true);if(!imageCanvas)return;ctx.save();ctx.globalAlpha=spec.opacity;ctx.drawImage(imageCanvas,destX+spec.x*(destW/sourceW),destY+spec.y*(destH/sourceH),spec.w*(destW/sourceW),spec.h*(destH/sourceH));ctx.restore();}
