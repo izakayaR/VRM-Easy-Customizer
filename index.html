@@ -3480,7 +3480,16 @@ if(rawCtx){
  // bloom pass is the final image operation, rather than being covered by the overlay.
  rawCtx.drawImage(glCanvas,sx,sy,sw,sh,0,0,W,H);
  drawCaptureImageOverlay(rawCtx,fullW,fullH,-sx*kx,-sy*ky,fullW*kx,fullH*ky);
- const litFrame=applyCaptureLightEffects(rawFrame,{pool:recordLightPool,cache:recordMobile?recordLightCache:null,gpu:recordMobile,maxWork:recordMobile?480:720});
+ let fxFreeFrame=null;
+ if(capLightActive()){const fx=capCollectEffects();if(fx.length){
+   // ブルーム／フレアの元画像用に、エフェクトを除いた同じ構図のフレームも作る
+   const r2=capRecFxCanvas||(capRecFxCanvas=document.createElement('canvas'));if(r2.width!==W)r2.width=W;if(r2.height!==H)r2.height=H;
+   const r2c=r2.getContext('2d');
+   if(r2c){for(const o of fx)o.visible=false;
+     try{renderer.render(scene,camera);r2c.clearRect(0,0,W,H);r2c.drawImage(glCanvas,sx,sy,sw,sh,0,0,W,H);drawCaptureImageOverlay(r2c,fullW,fullH,-sx*kx,-sy*ky,fullW*kx,fullH*ky);fxFreeFrame=r2;}
+     finally{for(const o of fx)o.visible=true;renderer.render(scene,camera);}}
+ }}
+ const litFrame=applyCaptureLightEffects(rawFrame,{pool:recordLightPool,cache:recordMobile?recordLightCache:null,gpu:recordMobile,maxWork:recordMobile?480:720,fxFree:fxFreeFrame});
  ctx.drawImage(litFrame,0,0,W,H);
 }
 if(recCfr){recCfrEmit(cfrNeed);}if(recordTrack){try{recordTrack.requestFrame();}catch(e){}}}
@@ -3494,9 +3503,37 @@ function planCaptureResolution(spec){const orig=renderer.getPixelRatio();const m
 const rMax=Math.min(maxDim/cssW,maxDim/cssH,Math.sqrt(maxPx/(cssW*cssH)));if(r>rMax)r=Math.max(rMax,0.1);if(spec.cropped){k=Math.max(1,Math.min(mEff,spec.frame.w*r/Math.max(1,spec.outW),spec.frame.h*r/Math.max(1,spec.outH)));}
 const outW=spec.cropped?Math.round(spec.outW*k):Math.floor(cssW*r);const outH=spec.cropped?Math.round(spec.outH*k):Math.floor(cssH*r);return{ratio:r,k,outW,outH};}
 function captureCanvasCore(spec,withBackground){if(spec.cropped)return renderCroppedCapture(spec,withBackground);renderer.render(scene,camera);const glCanvas=renderer.domElement;const out=document.createElement('canvas');out.width=glCanvas.width;out.height=glCanvas.height;const ctx=out.getContext('2d');if(withBackground)drawCaptureBackground(ctx,out.width,out.height);ctx.drawImage(glCanvas,0,0);drawCaptureImageOverlay(ctx,out.width,out.height,0,0,out.width,out.height);return out;}
-function captureCanvas(withBackground){try{hairOverlaySetHidden(true);}catch(_){}try{renderer.render(scene,camera);const canvas=captureCanvas_(withBackground);return applyCaptureLightEffects(canvas);}finally{try{hairOverlaySetHidden(false);}catch(_){}}}
+function captureCanvas(withBackground){try{hairOverlaySetHidden(true);}catch(_){}try{renderer.render(scene,camera);const canvas=captureCanvas_(withBackground);
+ // ブルーム／フレアの元画像には、エフェクト（流星など）を除いた画像を使う
+ let fxFree=null;if(capLightActive()){const fx=capCollectEffects();if(fx.length){for(const o of fx)o.visible=false;try{renderer.render(scene,camera);fxFree=captureCanvas_(withBackground);}finally{for(const o of fx)o.visible=true;renderer.render(scene,camera);}}}
+ return applyCaptureLightEffects(canvas,fxFree?{fxFree:fxFree}:undefined);}finally{try{hairOverlaySetHidden(false);}catch(_){}}}
 const capLightDefaults={all:0,flare:0,length:55,width:35,color:'warm'};
 function capLightValue(id){const e=document.getElementById(id);return e?e.value:0;}
+/* ===== エフェクト（流星群などのプラグインが作る演出）をブルーム／レンズフレアの対象から外す仕組み =====
+ * ブルームは「描画済みの画面から明るい部分を抜き出してぼかす」後処理。流星のように毎フレーム動くエフェクトが
+ * 元画像に入っていると、抜き出した光が古い位置のまま残像になる。そこで、エフェクトと認識されたオブジェクトは
+ * ブルーム／フレアの元画像から取り除き（非表示にして描き直し）、表示用の画像にだけ写すようにする。
+ * エフェクトと認識される条件（どれか1つで対象）:
+ *   ・プラグインが ctx.scene.add() / attach() で足したオブジェクト（自動で印が付く＝今後のプラグインも対象）
+ *   ・Object3D の userData.noBloom = true、または userData.vrmEffect = true
+ *   ・オブジェクト名が 'plugin-' で始まる
+ * 例外：userData.allowBloom = true を付けたものは、ブルームの対象に戻す。 */
+let capFxCanvas=null,capRecFxCanvas=null;
+function capIsEffectObject(o){const u=o.userData;if(u&&u.allowBloom)return false;return !!((u&&(u.noBloom||u.vrmEffect))||(typeof o.name==='string'&&o.name.indexOf('plugin-')===0));}
+function capCollectEffects(){const out=[];(function walk(o){const ch=o.children;for(let i=0;i<ch.length;i++){const c=ch[i];if(capIsEffectObject(c)){if(c.visible)out.push(c);}else walk(c);}})(scene);return out;}
+function capLightActive(){return Number(capLightValue('capBloomAll'))>0||Number(capLightValue('capLensFlare'))>0;}
+// 現在の画面をエフェクト抜きで描き直したコピーを返す（エフェクトが無ければ null）。描き終わったら表示用に元の状態へ戻す
+function capRenderNoFx(){
+ const fx=capCollectEffects();if(!fx.length)return null;
+ const src=renderer.domElement;if(!src.width||!src.height)return null;
+ const c=capFxCanvas||(capFxCanvas=document.createElement('canvas'));
+ if(c.width!==src.width)c.width=src.width;if(c.height!==src.height)c.height=src.height;
+ const cx=c.getContext('2d');if(!cx)return null;
+ for(const o of fx)o.visible=false;
+ try{renderer.render(scene,camera);cx.setTransform(1,0,0,1,0,0);cx.globalCompositeOperation='copy';cx.drawImage(src,0,0);cx.globalCompositeOperation='source-over';}
+ finally{for(const o of fx)o.visible=true;renderer.render(scene,camera);}
+ return c;
+}
 function capLightColor(){return ({warm:[255,174,92],white:[255,246,225],pink:[255,135,190],blue:[120,190,255]})[capLightValue('capLensColor')]||[255,174,92];}
 function detectCapLightSources(source,w,h,maxSpots=8){
  // Detect peaks independently inside each visible, textured clothing material's projected bounds.
@@ -3614,6 +3651,8 @@ function updateCapLightPreview(){
  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;
  ctx.globalCompositeOperation='source-over';ctx.filter='none';ctx.clearRect(0,0,w,h);ctx.restore();
  if(!w||!h||(!all&&!flare)){preview.style.display='none';return;}
+ // ブルーム／フレアの元画像は、エフェクト（流星など）を除いた画像にする（エフェクトが無ければ画面そのまま）
+ const hl=capRenderNoFx()||source;
  // Blur only extracted highlights. Blurring the whole model image creates a ghost silhouette.
  const makeHighlightCanvas=(threshold,softness)=>{
    // Extract highlights at a capped working resolution. The glow is blurred anyway,
@@ -3622,7 +3661,7 @@ function updateCapLightPreview(){
    const pw=Math.max(1,Math.round(w*scale)),ph=Math.max(1,Math.round(h*scale));
    const work=document.createElement('canvas');work.width=pw;work.height=ph;
    const tctx=work.getContext('2d',{willReadFrequently:true});if(!tctx)return work;
-   tctx.drawImage(source,0,0,pw,ph);
+   tctx.drawImage(hl,0,0,pw,ph);
    try{const im=tctx.getImageData(0,0,pw,ph),d=im.data;
      for(let i=0;i<d.length;i+=4){const lum=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2];
        const mask=Math.max(0,Math.min(1,(lum-threshold)/Math.max(1,255-threshold)));
@@ -3637,7 +3676,7 @@ function updateCapLightPreview(){
  if(all){const glow=makeHighlightCanvas(105,1);ctx.save();ctx.globalCompositeOperation='screen';
    ctx.globalAlpha=Math.min(.95,all*1.15);ctx.filter='blur('+Math.max(2,Math.min(w,h)*(.006+all*.018))+'px)';
    ctx.drawImage(glow,0,0);ctx.filter='none';ctx.restore();}
- if(flare){drawCapStarburstFlare(ctx,source,w,h,flare,Number(capLightValue('capLensLength')),Number(capLightValue('capLensWidth')),capLightColor());}
+ if(flare){drawCapStarburstFlare(ctx,hl,w,h,flare,Number(capLightValue('capLensLength')),Number(capLightValue('capLensWidth')),capLightColor());}
  preview.style.display='block';
 }
 function capGpuBloom(ctx,source,w,h,all,maxWork,pool){
@@ -3661,6 +3700,7 @@ function applyCaptureLightEffects(source,opts){
  const flare=Number(capLightValue('capLensFlare'))/100;
  if(!all&&!flare)return source;
  const w=source.width,h=source.height;
+ const hlSrc=(opts&&opts.fxFree&&opts.fxFree.width===w&&opts.fxFree.height===h)?opts.fxFree:source;   // ブルーム／フレアの元画像（エフェクトを除いたもの）
  const pool=(opts&&opts.pool)||null;const maxWork=(opts&&opts.maxWork)||960;
  const out=pool?(pool.out||(pool.out=document.createElement('canvas'))):document.createElement('canvas');
  if(out.width!==w)out.width=w;if(out.height!==h)out.height=h;
@@ -3676,7 +3716,7 @@ function applyCaptureLightEffects(source,opts){
    const pw=Math.max(1,Math.round(w*scale)),ph=Math.max(1,Math.round(h*scale));
    const work=pool?(pool.work||(pool.work=document.createElement('canvas'))):document.createElement('canvas');if(work.width!==pw)work.width=pw;if(work.height!==ph)work.height=ph;
    const tctx=work.getContext('2d',{willReadFrequently:true});if(!tctx)return work;
-   if(pool)tctx.clearRect(0,0,pw,ph);tctx.drawImage(source,0,0,pw,ph);
+   if(pool)tctx.clearRect(0,0,pw,ph);tctx.drawImage(hlSrc,0,0,pw,ph);
    try{
      const im=tctx.getImageData(0,0,pw,ph),d=im.data;
      for(let i=0;i<d.length;i+=4){
@@ -3691,7 +3731,7 @@ function applyCaptureLightEffects(source,opts){
    const outCtx=tmp.getContext('2d');if(outCtx){if(pool)outCtx.clearRect(0,0,w,h);outCtx.drawImage(work,0,0,w,h);}
    return tmp;
  };
- if(all&&opts&&opts.gpu&&pool&&capGpuBloom(ctx,source,w,h,all,maxWork,pool)){/* drawn on the GPU path */}
+ if(all&&opts&&opts.gpu&&pool&&capGpuBloom(ctx,hlSrc,w,h,all,maxWork,pool)){/* drawn on the GPU path */}
  else if(all){
    const glow=makeHighlightCanvas(105,1);
    ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=Math.min(.95,all*1.15);
@@ -3700,8 +3740,8 @@ function applyCaptureLightEffects(source,opts){
  }
  if(flare){let spots;const cache=opts&&opts.cache;
    // Video: detect highlight positions only every 3rd frame and reuse them in between.
-   if(cache){cache.n=cache.n||0;if(!cache.spots||cache.n%3===0)cache.spots=detectCapLightSources(source,w,h,8);cache.n++;spots=cache.spots;}
-   drawCapStarburstFlare(ctx,source,w,h,flare,Number(capLightValue('capLensLength')),Number(capLightValue('capLensWidth')),capLightColor(),spots);}
+   if(cache){cache.n=cache.n||0;if(!cache.spots||cache.n%3===0)cache.spots=detectCapLightSources(hlSrc,w,h,8);cache.n++;spots=cache.spots;}
+   drawCapStarburstFlare(ctx,hlSrc,w,h,flare,Number(capLightValue('capLensLength')),Number(capLightValue('capLensWidth')),capLightColor(),spots);}
  return out;
 }
 let capLightPreviewRaf=0;
@@ -5726,6 +5766,15 @@ var listEl=document.getElementById('capPluginList'),emptyEl=document.getElementB
 if(!listEl||!fileEl||!btnEl)return;
 try{localStorage.removeItem('vrmPluginsV1');}catch(e){} /* 旧方式(コードをそのまま保存)の残りを消去 */
 
+/* プラグインが scene に足したオブジェクトには「エフェクト」の印(userData.vrmEffect)を自動で付ける。
+ * 印の付いたものは、ブルーム／レンズフレアの元画像から除かれる（残像・二重がけの防止）。 */
+function markFx(o){try{if(o&&o.isObject3D){o.userData=o.userData||{};if(!o.userData.allowBloom)o.userData.vrmEffect=true;}}catch(e){}return o;}
+function pluginScene(real){
+  if(!real||typeof Proxy!=='function')return real;
+  return new Proxy(real,{get:function(t,p){
+    if(p==='add'||p==='attach')return function(){for(var i=0;i<arguments.length;i++)markFx(arguments[i]);return t[p].apply(t,arguments);};
+    var v=t[p];return typeof v==='function'?v.bind(t):v;}});
+}
 window.VRMPlugins={version:2,register:function(m){
   if(!m||!m.id||typeof m.mount!=='function')throw new Error('プラグイン定義が不正です');
   pending=m;}};
@@ -5801,7 +5850,7 @@ function mountEntry(id,loaded,error){
   if(error){showErr('プラグインを読み込めませんでした: '+(error.message||error));}
   else{try{
     var m=runSource(loaded.source),E=window.VRMEC;
-    e.instance=m.mount({THREE:E.THREE,scene:E.scene,renderer:E.renderer,camera:E.camera,controls:E.controls,
+    e.instance=m.mount({THREE:E.THREE,scene:pluginScene(E.scene),markEffect:markFx,renderer:E.renderer,camera:E.camera,controls:E.controls,
       getVrm:E.getVrm,container:host,storage:storageFor(id)})||null;
   }catch(err){console.error('plugin error',id,err);showErr('プラグインの起動に失敗しました: '+(err&&err.message||err));}}
   updateEmpty();
