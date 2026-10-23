@@ -3762,7 +3762,7 @@ if(typeof controls!=='undefined'&&controls&&controls.addEventListener){controls.
 function captureCanvas_(withBackground){const spec=getCaptureSpec();const plan=planCaptureResolution(spec);const orig=renderer.getPixelRatio();const changed=Math.abs(plan.ratio-orig)>1e-3;try{if(changed)renderer.setPixelRatio(plan.ratio);const spec2=spec.cropped?{...spec,outW:plan.outW,outH:plan.outH}:spec;return captureCanvasCore(spec2,withBackground);}finally{if(changed){renderer.setPixelRatio(orig);renderer.render(scene,camera);}}}
 function captureCompositeScreenshot(){return captureCanvas(true).toDataURL('image/png');}
 function downloadDataUrl(dataUrl,filename){const a=document.createElement('a');a.href=dataUrl;a.download=filename;a.click();}
-function collectMaterials(vrm){const list=[];const seen=new Set();vrm.scene.traverse(obj=>{if(!obj.isMesh)return;const mats=Array.isArray(obj.material)?obj.material:[obj.material];mats.forEach(m=>{if(m&&!seen.has(m.uuid)){seen.add(m.uuid);list.push(m);}});});return list;}
+function collectMaterials(vrm){const list=[];const seen=new Set();vrm.scene.traverse(obj=>{if(!obj.isMesh)return;if(obj.userData&&obj.userData.__hairOverlay)return;const mats=Array.isArray(obj.material)?obj.material:[obj.material];mats.forEach(m=>{if(m&&!seen.has(m.uuid)){seen.add(m.uuid);list.push(m);}});});return list;}
 function materialLabel(mat,idx){if(mat?.userData?.__isAccessoryMaterial||mat?.userData?.__accessoryTextureExact){const name=mat.userData.__accessoryTextureName||'';return name?('アクセサリー: '+name):'アクセサリー テクスチャ';}
 return(mat.name&&mat.name.trim())?mat.name:('マテリアル '+(idx+1));}
 function getEditableTextureCanvas(mat){
