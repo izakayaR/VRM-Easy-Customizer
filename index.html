@@ -3519,7 +3519,7 @@ function capLightValue(id){const e=document.getElementById(id);return e?e.value:
  *   ・オブジェクト名が 'plugin-' で始まる
  * 例外：userData.allowBloom = true を付けたものは、ブルームの対象に戻す。 */
 let capFxCanvas=null,capRecFxCanvas=null;
-function capIsEffectObject(o){const u=o.userData;if(u&&u.allowBloom)return false;return !!((u&&(u.noBloom||u.vrmEffect))||(typeof o.name==='string'&&o.name.indexOf('plugin-')===0));}
+function capIsEffectObject(o){const u=o.userData;if(u&&u.allowBloom)return false;return !!((u&&(u.noBloom||u.vrmEffect))||(typeof o.name==='string'&&(o.name.indexOf('plugin-')===0||o.name.indexOf('MagicCircle')===0)));}
 function capCollectEffects(){const out=[];(function walk(o){const ch=o.children;for(let i=0;i<ch.length;i++){const c=ch[i];if(capIsEffectObject(c)){if(c.visible)out.push(c);}else walk(c);}})(scene);return out;}
 function capLightActive(){return Number(capLightValue('capBloomAll'))>0||Number(capLightValue('capLensFlare'))>0;}
 // 現在の画面をエフェクト抜きで描き直したコピーを返す（エフェクトが無ければ null）。描き終わったら表示用に元の状態へ戻す
@@ -5769,12 +5769,15 @@ try{localStorage.removeItem('vrmPluginsV1');}catch(e){} /* 旧方式(コード�
 /* プラグインが scene に足したオブジェクトには「エフェクト」の印(userData.vrmEffect)を自動で付ける。
  * 印の付いたものは、ブルーム／レンズフレアの元画像から除かれる（残像・二重がけの防止）。 */
 function markFx(o){try{if(o&&o.isObject3D){o.userData=o.userData||{};if(!o.userData.allowBloom)o.userData.vrmEffect=true;}}catch(e){}return o;}
-function pluginScene(real){
-  if(!real||typeof Proxy!=='function')return real;
-  return new Proxy(real,{get:function(t,p){
-    if(p==='add'||p==='attach')return function(){for(var i=0;i<arguments.length;i++)markFx(arguments[i]);return t[p].apply(t,arguments);};
-    var v=t[p];return typeof v==='function'?v.bind(t):v;}});
-}
+/* プラグインには Proxy ではなく本物の scene を渡す。
+ * （Proxy だと、プラグインが renderer.render をフックして行う「s === ctx.scene」の判定が一致せず、
+ *   プラグインの更新処理が走らなかった／エフェクトの印付けが不安定だった。）
+ * 印付けは「マウント中に scene へ足されたもの」を add/attach のフックと、マウント後の差分検査の両方で行う。 */
+var fxMountDepth=0,fxHooked=false;
+function hookSceneAdd(sc){if(fxHooked||!sc)return;fxHooked=true;
+  ['add','attach'].forEach(function(k){var orig=sc[k];if(typeof orig!=='function')return;
+    sc[k]=function(){if(fxMountDepth>0)for(var i=0;i<arguments.length;i++)markFx(arguments[i]);return orig.apply(this,arguments);};});}
+function pluginScene(real){hookSceneAdd(real);return real;}
 window.VRMPlugins={version:2,register:function(m){
   if(!m||!m.id||typeof m.mount!=='function')throw new Error('プラグイン定義が不正です');
   pending=m;}};
@@ -5850,8 +5853,10 @@ function mountEntry(id,loaded,error){
   if(error){showErr('プラグインを読み込めませんでした: '+(error.message||error));}
   else{try{
     var m=runSource(loaded.source),E=window.VRMEC;
-    e.instance=m.mount({THREE:E.THREE,scene:pluginScene(E.scene),markEffect:markFx,renderer:E.renderer,camera:E.camera,controls:E.controls,
-      getVrm:E.getVrm,container:host,storage:storageFor(id)})||null;
+    var fxBefore=new Set(E.scene.children);fxMountDepth++;
+    try{e.instance=m.mount({THREE:E.THREE,scene:pluginScene(E.scene),markEffect:markFx,renderer:E.renderer,camera:E.camera,controls:E.controls,
+      getVrm:E.getVrm,container:host,storage:storageFor(id)})||null;}
+    finally{fxMountDepth--;E.scene.children.forEach(function(c){if(!fxBefore.has(c))markFx(c);});}
   }catch(err){console.error('plugin error',id,err);showErr('プラグインの起動に失敗しました: '+(err&&err.message||err));}}
   updateEmpty();
 }
