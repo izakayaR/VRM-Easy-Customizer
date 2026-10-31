@@ -2546,11 +2546,23 @@ btnLookAtCamera.addEventListener('click',()=>setLookAtCamera(!lookAtCameraActive
 function refreshSlidersFromBone(){const bone=getSelectedBone();if(!bone)return;const lim=jointLimitsEnabled?JOINT_LIMITS[boneSelect.value]:null;const range=(axis)=>lim?lim[axis]:[-180,180];const[xMin,xMax]=range('x');const[yMin,yMax]=range('y');const[zMin,zMax]=range('z');boneX.min=xMin;boneX.max=xMax;boneY.min=yMin;boneY.max=yMax;boneZ.min=zMin;boneZ.max=zMax;boneX.value=Math.round(THREE.MathUtils.radToDeg(bone.rotation.x));boneY.value=Math.round(THREE.MathUtils.radToDeg(bone.rotation.y));boneZ.value=Math.round(THREE.MathUtils.radToDeg(bone.rotation.z));boneXVal.textContent=boneX.value+'°';boneYVal.textContent=boneY.value+'°';boneZVal.textContent=boneZ.value+'°';}
 function applyBoneSlider(){if(previewActive)exitPreview();const bone=getSelectedBone();if(!bone)return;bone.rotation.set(THREE.MathUtils.degToRad(parseFloat(boneX.value)),THREE.MathUtils.degToRad(parseFloat(boneY.value)),THREE.MathUtils.degToRad(parseFloat(boneZ.value)));if(clampBoneToJointLimits(boneSelect.value,bone))refreshSlidersFromBone();applySymmetry(boneSelect.value);layerCaptureAll();}
 boneSelect.addEventListener('change',refreshSlidersFromBone);let symmetricMode=false;const MIRROR_BONE_MAP={};BONE_LIST.forEach(name=>{if(name.startsWith('left'))MIRROR_BONE_MAP[name]='right'+name.slice(4);else if(name.startsWith('right'))MIRROR_BONE_MAP[name]='left'+name.slice(5);});function applySymmetry(sourceName){if(!symmetricMode||!currentVrm||!currentVrm.humanoid)return;const mirrorName=MIRROR_BONE_MAP[sourceName];if(!mirrorName)return;const src=currentVrm.humanoid.getNormalizedBoneNode(sourceName);const dst=currentVrm.humanoid.getNormalizedBoneNode(mirrorName);if(!src||!dst)return;dst.rotation.set(src.rotation.x,-src.rotation.y,-src.rotation.z);clampBoneToJointLimits(mirrorName,dst);if(mirrorName===boneSelect.value)refreshSlidersFromBone();}
-btnSymmetric.addEventListener('click',()=>{symmetricMode=!symmetricMode;btnSymmetric.classList.toggle('active',symmetricMode);btnSymmetric.textContent='左右対称：'+(symmetricMode?'オン':'オフ');});let twistMode=false;btnTwistMode.addEventListener('click',()=>{twistMode=!twistMode;btnTwistMode.classList.toggle('active',twistMode);btnTwistMode.textContent='ひねりモード：'+(twistMode?'オン':'オフ');});const histSeqMap=new WeakMap();window.VRMHistSeq=window.VRMHistSeq||{n:0,next(){return ++this.n;}};function histStamp(o){try{if(o&&typeof o==='object')histSeqMap.set(o,window.VRMHistSeq.next());}catch(_){}}function histCopyStamp(from,to){try{if(from&&to&&typeof to==='object')histSeqMap.set(to,histSeqMap.get(from)||0);}catch(_){}}function histSeqOf(o){return(o&&histSeqMap.get(o))||0;}let poseHistory=[];let poseFuture=[];const POSE_HISTORY_LIMIT=50;let dragStartState=null;function captureBoneState(){const state={};if(!currentVrm||!currentVrm.humanoid)return state;BONE_LIST.concat(FINGER_BONE_LIST).forEach(name=>{const b=currentVrm.humanoid.getNormalizedBoneNode(name);if(b)state[name]=[b.rotation.x,b.rotation.y,b.rotation.z];});state.__grip=[handGripPercent('left'),handGripPercent('right')];state.__fingerCurl={left:{...FINGER_CURL.left},right:{...FINGER_CURL.right}};state.__fingerSpread={left:{...FINGER_SPREAD.left},right:{...FINGER_SPREAD.right}};state.__hair=hairCapture();try{const hn=currentVrm.humanoid.getNormalizedBoneNode('hips');state.__hipsPos=hn?hn.position.toArray():null;}catch(_){}try{state.__expressions=getPoseExpressionValues();}catch(_){state.__expressions=[];}try{state.__avatarPosition={x:avatarXOffsetCm,y:avatarYOffsetCm,z:avatarZOffsetCm};}catch(_){}return state;}
-function applyBoneState(state){if(!currentVrm||!currentVrm.humanoid)return;Object.entries(state).forEach(([name,rot])=>{if(name==='__grip'||name==='__fingerCurl'||name==='__fingerSpread'||name==='__hair'||name==='__hipsPos'||name==='__expressions'||name==='__avatarPosition')return;const b=currentVrm.humanoid.getNormalizedBoneNode(name);if(b)b.rotation.set(rot[0],rot[1],rot[2]);});if(state.__grip){setGripUI('left',state.__grip[0]);setGripUI('right',state.__grip[1]);}
+btnSymmetric.addEventListener('click',()=>{symmetricMode=!symmetricMode;btnSymmetric.classList.toggle('active',symmetricMode);btnSymmetric.textContent='左右対称：'+(symmetricMode?'オン':'オフ');});let twistMode=false;btnTwistMode.addEventListener('click',()=>{twistMode=!twistMode;btnTwistMode.classList.toggle('active',twistMode);btnTwistMode.textContent='ひねりモード：'+(twistMode?'オン':'オフ');});const histSeqMap=new WeakMap();window.VRMHistSeq=window.VRMHistSeq||{n:0,next(){return ++this.n;}};function histStamp(o){try{if(o&&typeof o==='object')histSeqMap.set(o,window.VRMHistSeq.next());}catch(_){}}const histNoExtras=new WeakSet();function histCopyStamp(from,to){try{if(from&&to&&typeof to==='object'){histSeqMap.set(to,histSeqMap.get(from)||0);if(histNoExtras.has(from))histNoExtras.add(to);}}catch(_){}}function histSeqOf(o){return(o&&histSeqMap.get(o))||0;}let poseHistory=[];let poseFuture=[];const POSE_HISTORY_LIMIT=50;let dragStartState=null;function captureBoneState(){const state={};if(!currentVrm||!currentVrm.humanoid)return state;BONE_LIST.concat(FINGER_BONE_LIST).forEach(name=>{const b=currentVrm.humanoid.getNormalizedBoneNode(name);if(b)state[name]=[b.rotation.x,b.rotation.y,b.rotation.z];});state.__grip=[handGripPercent('left'),handGripPercent('right')];state.__fingerCurl={left:{...FINGER_CURL.left},right:{...FINGER_CURL.right}};state.__fingerSpread={left:{...FINGER_SPREAD.left},right:{...FINGER_SPREAD.right}};state.__hair=hairCapture();try{const hn=currentVrm.humanoid.getNormalizedBoneNode('hips');state.__hipsPos=hn?hn.position.toArray():null;}catch(_){}try{state.__expressions=getPoseExpressionValues();}catch(_){state.__expressions=[];}try{state.__avatarPosition={x:avatarXOffsetCm,y:avatarYOffsetCm,z:avatarZOffsetCm};}catch(_){}return state;}
+function applyBoneState(state,opts){const keepExtras=!!(opts&&opts.keepExtras);if(!currentVrm||!currentVrm.humanoid)return;Object.entries(state).forEach(([name,rot])=>{if(name==='__grip'||name==='__fingerCurl'||name==='__fingerSpread'||name==='__hair'||name==='__hipsPos'||name==='__expressions'||name==='__avatarPosition')return;const b=currentVrm.humanoid.getNormalizedBoneNode(name);if(b)b.rotation.set(rot[0],rot[1],rot[2]);});if(state.__grip){setGripUI('left',state.__grip[0]);setGripUI('right',state.__grip[1]);}
 if(state.__fingerCurl){['left','right'].forEach(side=>{FINGER_NAMES.forEach(finger=>{const pct=state.__fingerCurl[side][finger]||0;FINGER_CURL[side][finger]=pct;setFingerCurlUI(side,finger,pct);});});}
-if(state.__fingerSpread){['left','right'].forEach(side=>{FINGER_NAMES.forEach(finger=>{const deg=state.__fingerSpread[side][finger]||0;FINGER_SPREAD[side][finger]=deg;setFingerSpreadUI(side,finger,deg);});});}if(state.__hipsPos){const hn=currentVrm.humanoid.getNormalizedBoneNode('hips');if(hn)hn.position.fromArray(state.__hipsPos);}if(state.__hair)hairRestore(state.__hair);if(state.__avatarPosition)applyAvatarPosition(state.__avatarPosition);if(Array.isArray(state.__expressions))applyPoseExpressionValues(state.__expressions);}
+if(state.__fingerSpread){['left','right'].forEach(side=>{FINGER_NAMES.forEach(finger=>{const deg=state.__fingerSpread[side][finger]||0;FINGER_SPREAD[side][finger]=deg;setFingerSpreadUI(side,finger,deg);});});}if(state.__hipsPos){const hn=currentVrm.humanoid.getNormalizedBoneNode('hips');if(hn)hn.position.fromArray(state.__hipsPos);}if(state.__hair)hairRestore(state.__hair);if(!keepExtras&&state.__avatarPosition)applyAvatarPosition(state.__avatarPosition);if(!keepExtras&&Array.isArray(state.__expressions))applyPoseExpressionValues(state.__expressions);}
 function pushHistory(beforeState){if(!beforeState||Object.keys(beforeState).length===0)return;histStamp(beforeState);poseHistory.push(beforeState);if(poseHistory.length>POSE_HISTORY_LIMIT)poseHistory.shift();poseFuture=[];try{window.VRMPluginHistory&&window.VRMPluginHistory.clearRedo();}catch(_){}updateUndoRedoButtons();}
+function histEqVal(x,y){if(x===y)return true;if(typeof x==='number'&&typeof y==='number')return Math.abs(x-y)<1e-6;if(x==null||y==null||typeof x!=='object'||typeof y!=='object')return false;if(Array.isArray(x)!==Array.isArray(y))return false;const kx=Object.keys(x),ky=Object.keys(y);if(kx.length!==ky.length)return false;for(const k of kx){if(!histEqVal(x[k],y[k]))return false;}return true;}
+function poseStatesEqual(a,b){const strip=(s)=>{const o={};Object.keys(s||{}).forEach(k=>{if(k!=='__expressions'&&k!=='__avatarPosition')o[k]=s[k];});return o;};try{return histEqVal(strip(a),strip(b));}catch(_){return false;}}
+/* 操作の「あと」に呼ぶ版：実際にポーズが変わったときだけ履歴に積む（空のアンドゥを作らない）。表情とアバター位置は巻き戻し対象にしない */
+function pushHistoryIfChanged(before){if(!before||Object.keys(before).length===0)return false;let now=null;try{now=captureBoneState();}catch(_){}if(now&&poseStatesEqual(before,now))return false;histNoExtras.add(before);pushHistory(before);return true;}
+/* スライダー1本ごとに「操作前の状態」を持つ。マウス／タッチ／キーボードのどれでも1操作=1履歴。掴んだだけで変更なしなら破棄 */
+function bindPoseSliderHistory(slider){if(!slider)return;let start=null,timer=0;const begin=(force)=>{if(force||!start)start=captureBoneState();};
+slider.addEventListener('pointerdown',()=>{clearTimeout(timer);begin(true);});
+slider.addEventListener('keydown',(e)=>{if(/^(Arrow|Page|Home$|End$)/.test(e.key||''))begin(true);});
+slider.addEventListener('input',()=>begin(false),true);
+slider.addEventListener('change',()=>{clearTimeout(timer);if(start){const st=start;start=null;pushHistoryIfChanged(st);}});
+const end=()=>{clearTimeout(timer);timer=setTimeout(()=>{start=null;},80);};
+slider.addEventListener('pointerup',end);slider.addEventListener('pointercancel',end);}
 function resetHistory(){poseHistory=[];poseFuture=[];updateUndoRedoButtons();if(poseStatusEl)poseStatusEl.textContent='';}
 function updateUndoRedoButtons(){const accessoryContext=modeAccessoryTab?.classList.contains('active');if(accessoryContext){btnUndo.disabled=accessoryUndoStack.length===0;btnRedo.disabled=accessoryRedoStack.length===0;}else if(!paintStudioEl.classList.contains('open')&&(avatarPositionUndo?.length||avatarPositionRedo?.length)){btnUndo.disabled=!(avatarPositionUndo?.length||poseHistory.length);btnRedo.disabled=!(avatarPositionRedo?.length||poseFuture.length);}else{btnUndo.disabled=poseHistory.length===0;btnRedo.disabled=poseFuture.length===0;}if(!accessoryContext&&!paintStudioEl.classList.contains('open')){const _ph=window.VRMPluginHistory;if(_ph){if(_ph.canUndo())btnUndo.disabled=false;if(_ph.canRedo())btnRedo.disabled=false;}}
   const mobileUndo=document.getElementById('mobileHistoryUndo');
@@ -2560,14 +2572,14 @@ function updateUndoRedoButtons(){const accessoryContext=modeAccessoryTab?.classL
 }
 let historyPhysicsPauseFrames=0;let historySpringPoseSnapshot=[];function captureHistorySpringPoseSnapshot(){const bones=new Set();try{const vrms=new Set();if(currentVrm)vrms.add(currentVrm);loadedAvatars.forEach(item=>{if(item&&item.vrm)vrms.add(item.vrm);});vrms.forEach(vrm=>{const manager=vrm&&vrm.springBoneManager;if(manager&&manager.joints)Array.from(manager.joints).forEach(j=>{if(j&&j.bone)bones.add(j.bone);});});}catch(_){}try{accessoryItems.forEach(item=>(item&&item.springJoints||[]).forEach(j=>{if(j&&j.bone)bones.add(j.bone);}));}catch(_){}historySpringPoseSnapshot=[];bones.forEach(b=>{try{historySpringPoseSnapshot.push({bone:b,quaternion:b.quaternion.clone(),position:b.position.clone()});}catch(_){}});}function restoreHistorySpringPoseSnapshot(){historySpringPoseSnapshot.forEach(s=>{try{if(s.bone&&s.bone.quaternion&&s.quaternion)s.bone.quaternion.copy(s.quaternion);if(s.bone&&s.bone.position&&s.position)s.bone.position.copy(s.position);}catch(_){}});try{currentVrm&&currentVrm.scene&&currentVrm.scene.updateMatrixWorld(true);}catch(_){}try{loadedAvatars.forEach(item=>item&&item.vrm&&item.vrm.scene&&item.vrm.scene.updateMatrixWorld(true));}catch(_){}}function pauseSpringPhysicsForHistory(){historyPhysicsPauseFrames=Math.max(historyPhysicsPauseFrames,20);captureHistorySpringPoseSnapshot();}
 function refreshPhysicsAfterHistory(){const vrms=new Set();if(currentVrm)vrms.add(currentVrm);try{loadedAvatars.forEach(item=>{if(item&&item.vrm)vrms.add(item.vrm);});}catch(_){}const resetJoint=j=>{if(!j)return;try{if(typeof j.reset==='function')j.reset();else if(typeof j.setInitState==='function')j.setInitState();}catch(_){}};vrms.forEach(vrm=>{try{if(vrm.humanoid&&typeof vrm.humanoid.update==='function')vrm.humanoid.update();}catch(_){}try{vrm.scene&&vrm.scene.updateMatrixWorld(true);}catch(_){}try{const manager=vrm.springBoneManager;if(manager&&manager.joints){const joints=Array.from(manager.joints);joints.forEach(resetJoint);}}catch(_){}try{if(vrm===currentVrm)accessoryItems.forEach(item=>{if(item&&item.springJoints)item.springJoints.forEach(resetJoint);});}catch(_){}try{vrm.scene&&vrm.scene.updateMatrixWorld(true);}catch(_){}});}
-function undoPose(){if(poseHistory.length===0)return;if(previewActive)exitPreview();const prev=poseHistory.pop();const _fs=captureBoneState();histCopyStamp(prev,_fs);poseFuture.push(_fs);if(poseAction)stopPoseAnimation();pauseSpringPhysicsForHistory();applyBoneState(prev);try{currentVrm?.scene?.updateMatrixWorld(true);}catch(_){}refreshPhysicsAfterHistory();pauseSpringPhysicsForHistory();layerCaptureAll();refreshSlidersFromBone();updateUndoRedoButtons();}
-function redoPose(){if(poseFuture.length===0)return;if(previewActive)exitPreview();const next=poseFuture.pop();const _hs=captureBoneState();histCopyStamp(next,_hs);poseHistory.push(_hs);if(poseAction)stopPoseAnimation();pauseSpringPhysicsForHistory();applyBoneState(next);try{currentVrm?.scene?.updateMatrixWorld(true);}catch(_){}refreshPhysicsAfterHistory();pauseSpringPhysicsForHistory();layerCaptureAll();refreshSlidersFromBone();updateUndoRedoButtons();}
+function undoPose(){if(poseHistory.length===0)return;if(previewActive)exitPreview();const prev=poseHistory.pop();const _fs=captureBoneState();histCopyStamp(prev,_fs);poseFuture.push(_fs);if(poseAction)stopPoseAnimation();pauseSpringPhysicsForHistory();applyBoneState(prev,{keepExtras:histNoExtras.has(prev)});try{currentVrm?.scene?.updateMatrixWorld(true);}catch(_){}refreshPhysicsAfterHistory();pauseSpringPhysicsForHistory();layerCaptureAll();refreshSlidersFromBone();updateUndoRedoButtons();}
+function redoPose(){if(poseFuture.length===0)return;if(previewActive)exitPreview();const next=poseFuture.pop();const _hs=captureBoneState();histCopyStamp(next,_hs);poseHistory.push(_hs);if(poseAction)stopPoseAnimation();pauseSpringPhysicsForHistory();applyBoneState(next,{keepExtras:histNoExtras.has(next)});try{currentVrm?.scene?.updateMatrixWorld(true);}catch(_){}refreshPhysicsAfterHistory();pauseSpringPhysicsForHistory();layerCaptureAll();refreshSlidersFromBone();updateUndoRedoButtons();}
 function pluginUndoFirst(){const ph=window.VRMPluginHistory;if(!ph||!ph.canUndo())return false;const ps=ph.topSeq('undo');if(avatarPositionUndo?.length&&histSeqOf(avatarPositionUndo[avatarPositionUndo.length-1])>ps)return false;if(poseHistory.length&&histSeqOf(poseHistory[poseHistory.length-1])>ps)return false;return true;}
 function pluginRedoFirst(){const ph=window.VRMPluginHistory;if(!ph||!ph.canRedo())return false;const ps=ph.topSeq('redo');if(avatarPositionRedo?.length&&histSeqOf(avatarPositionRedo[avatarPositionRedo.length-1])<ps)return false;if(poseFuture.length&&histSeqOf(poseFuture[poseFuture.length-1])<ps)return false;return true;}
 function undoMain(){if(pluginUndoFirst()){window.VRMPluginHistory.undo();updateUndoRedoButtons();return;}const av=avatarPositionUndo?.length?histSeqOf(avatarPositionUndo[avatarPositionUndo.length-1]):-1;const po=poseHistory.length?histSeqOf(poseHistory[poseHistory.length-1]):-1;if(av>=0&&av>=po)undoAvatarPosition();else undoPose();}
 function redoMain(){if(pluginRedoFirst()){window.VRMPluginHistory.redo();updateUndoRedoButtons();return;}const av=avatarPositionRedo?.length?histSeqOf(avatarPositionRedo[avatarPositionRedo.length-1]):Infinity;const po=poseFuture.length?histSeqOf(poseFuture[poseFuture.length-1]):Infinity;if(av!==Infinity&&av<=po)redoAvatarPosition();else redoPose();}
 document.addEventListener('vrm-plugin-history',(e)=>{if(e&&e.detail&&e.detail.recorded){poseFuture=[];try{avatarPositionRedo.length=0;}catch(_){}}updateUndoRedoButtons();});
-btnUndo.addEventListener('click',()=>{if(modeAccessoryTab?.classList.contains('active'))undoAccessory();else if(paintStudioEl.classList.contains('open'))paintUndo();else undoMain();});btnRedo.addEventListener('click',()=>{if(modeAccessoryTab?.classList.contains('active'))redoAccessory();else if(paintStudioEl.classList.contains('open'))paintRedo();else redoMain();});const mobileHistoryUndo=document.getElementById('mobileHistoryUndo');const mobileHistoryRedo=document.getElementById('mobileHistoryRedo');mobileHistoryUndo?.addEventListener('click',()=>{if(modeAccessoryTab?.classList.contains('active'))undoAccessory();else undoMain();updateUndoRedoButtons();});mobileHistoryRedo?.addEventListener('click',()=>{if(modeAccessoryTab?.classList.contains('active'))redoAccessory();else redoMain();updateUndoRedoButtons();});btnUndo.textContent='元に戻す';btnRedo.textContent='やり直す';window.addEventListener('keydown',(e)=>{if(matchesUndoCombo(e)){e.preventDefault();if(modeAccessoryTab?.classList.contains('active'))undoAccessory();else if(paintStudioEl.classList.contains('open'))paintUndo();else undoMain();}else if(matchesRedoCombo(e)){e.preventDefault();if(modeAccessoryTab?.classList.contains('active'))redoAccessory();else if(paintStudioEl.classList.contains('open'))paintRedo();else redoMain();}});const allFingerCurlSliderEls=['left','right'].flatMap(side=>FINGER_NAMES.map(finger=>fingerCurlSliders[side][finger][0]));const allFingerSpreadSliderEls=['left','right'].flatMap(side=>FINGER_NAMES.map(finger=>fingerSpreadSliders[side][finger][0]));[boneX,boneY,boneZ,gripLeft,gripRight,...allFingerCurlSliderEls,...allFingerSpreadSliderEls].forEach((slider)=>{slider.addEventListener('pointerdown',()=>{dragStartState=captureBoneState();});slider.addEventListener('change',()=>{if(dragStartState){pushHistory(dragStartState);dragStartState=null;}});});[[boneX,boneXVal],[boneY,boneYVal],[boneZ,boneZVal]].forEach(([slider,label])=>{slider.addEventListener('input',()=>{label.textContent=slider.value+'°';applyBoneSlider();});});btnResetBone.addEventListener('click',()=>{if(previewActive)exitPreview();const bone=getSelectedBone();if(!bone)return;pushHistory(captureBoneState());bone.rotation.set(0,0,0);applySymmetry(boneSelect.value);layerCaptureAll();refreshSlidersFromBone();});btnResetPose.addEventListener('click',()=>{if(!currentVrm||!currentVrm.humanoid)return;if(previewActive)exitPreview();pushHistory(captureBoneState());
+btnUndo.addEventListener('click',()=>{if(modeAccessoryTab?.classList.contains('active'))undoAccessory();else if(paintStudioEl.classList.contains('open'))paintUndo();else undoMain();});btnRedo.addEventListener('click',()=>{if(modeAccessoryTab?.classList.contains('active'))redoAccessory();else if(paintStudioEl.classList.contains('open'))paintRedo();else redoMain();});const mobileHistoryUndo=document.getElementById('mobileHistoryUndo');const mobileHistoryRedo=document.getElementById('mobileHistoryRedo');mobileHistoryUndo?.addEventListener('click',()=>{if(modeAccessoryTab?.classList.contains('active'))undoAccessory();else undoMain();updateUndoRedoButtons();});mobileHistoryRedo?.addEventListener('click',()=>{if(modeAccessoryTab?.classList.contains('active'))redoAccessory();else redoMain();updateUndoRedoButtons();});btnUndo.textContent='元に戻す';btnRedo.textContent='やり直す';window.addEventListener('keydown',(e)=>{if(matchesUndoCombo(e)){e.preventDefault();if(modeAccessoryTab?.classList.contains('active'))undoAccessory();else if(paintStudioEl.classList.contains('open'))paintUndo();else undoMain();}else if(matchesRedoCombo(e)){e.preventDefault();if(modeAccessoryTab?.classList.contains('active'))redoAccessory();else if(paintStudioEl.classList.contains('open'))paintRedo();else redoMain();}});const allFingerCurlSliderEls=['left','right'].flatMap(side=>FINGER_NAMES.map(finger=>fingerCurlSliders[side][finger][0]));const allFingerSpreadSliderEls=['left','right'].flatMap(side=>FINGER_NAMES.map(finger=>fingerSpreadSliders[side][finger][0]));[boneX,boneY,boneZ,gripLeft,gripRight,...allFingerCurlSliderEls,...allFingerSpreadSliderEls].forEach((slider)=>bindPoseSliderHistory(slider));[[boneX,boneXVal],[boneY,boneYVal],[boneZ,boneZVal]].forEach(([slider,label])=>{slider.addEventListener('input',()=>{label.textContent=slider.value+'°';applyBoneSlider();});});btnResetBone.addEventListener('click',()=>{if(previewActive)exitPreview();const bone=getSelectedBone();if(!bone)return;pushHistory(captureBoneState());bone.rotation.set(0,0,0);applySymmetry(boneSelect.value);layerCaptureAll();refreshSlidersFromBone();});btnResetPose.addEventListener('click',()=>{if(!currentVrm||!currentVrm.humanoid)return;if(previewActive)exitPreview();pushHistory(captureBoneState());
 const hadMotion=!!(poseAction||poseMixer||stitch.frames.length||vmdMotionSource||vmdFaceSource);
 if(hadMotion){/* モーション読み込み後：再生・組み込んだキーフレーム・読み込んだMMDモーションをすべて消し、アバター読み込み時の初期状態に戻す */
 layerBeforeMixer();stopPoseAnimation();stitch.frames=[];stitch.segments=[];clearVmdSources();stitchRefreshUI();
@@ -2794,8 +2806,8 @@ function hairSetKey(key,val){
   ts.forEach(t=>{t.state[key]=val;hairApplyTree(t);});
 }
 Object.entries(hairUI.sliders).forEach(([key,[sl,lb,u]])=>{
-  sl.addEventListener('pointerdown',()=>{dragStartState=captureBoneState();});
-  sl.addEventListener('change',()=>{if(dragStartState){pushHistory(dragStartState);dragStartState=null;}});
+  bindPoseSliderHistory(sl);
+  
   sl.addEventListener('input',()=>{
     const v=parseFloat(sl.value);const st=hairCurrentState();
     let k=key;if(key==='amount')k=st.manual?'angle':'wind';else if(key==='side')k=st.manual?'angleX':'windX';
@@ -3300,7 +3312,7 @@ btnToggleHandles.addEventListener('click',()=>{showBoneHandles=!showBoneHandles;
 renderer.domElement.addEventListener('pointerdown',(e)=>{if(!showBoneHandles||!currentVrm||paintStudioEl.classList.contains('open'))return;const hit=pickBoneHandle(e.clientX,e.clientY);if(!hit)return;e.preventDefault();const boneName=hit.userData.boneName;boneSelect.value=boneName;refreshSlidersFromBone();controls.enabled=false;draggingHandle={boneName,lastX:e.clientX,lastY:e.clientY,dragStartState:captureBoneState(),};renderer.domElement.setPointerCapture(e.pointerId);});window.addEventListener('pointermove',(e)=>{if(draggingHandle){const bone=currentVrm&&currentVrm.humanoid&&currentVrm.humanoid.getNormalizedBoneNode(draggingHandle.boneName);if(bone){const dx=e.clientX-draggingHandle.lastX;const dy=e.clientY-draggingHandle.lastY;const SENSITIVITY=0.4;const curX=THREE.MathUtils.radToDeg(bone.rotation.x);const curY=THREE.MathUtils.radToDeg(bone.rotation.y);const curZ=THREE.MathUtils.radToDeg(bone.rotation.z);const newX=THREE.MathUtils.clamp(curX+dy*SENSITIVITY,parseFloat(boneX.min),parseFloat(boneX.max));let newY=curY,newZ=curZ;if(e.shiftKey||twistMode)newY=THREE.MathUtils.clamp(curY+dx*SENSITIVITY,parseFloat(boneY.min),parseFloat(boneY.max));else newZ=THREE.MathUtils.clamp(curZ+dx*SENSITIVITY,parseFloat(boneZ.min),parseFloat(boneZ.max));bone.rotation.x=THREE.MathUtils.degToRad(newX);bone.rotation.y=THREE.MathUtils.degToRad(newY);bone.rotation.z=THREE.MathUtils.degToRad(newZ);applySymmetry(draggingHandle.boneName);layerCaptureAll();if(boneSelect.value===draggingHandle.boneName)refreshSlidersFromBone();}
 draggingHandle.lastX=e.clientX;draggingHandle.lastY=e.clientY;return;}
 if(!showBoneHandles||!currentVrm||paintStudioEl.classList.contains('open')){hoveredHandle=null;return;}
-hoveredHandle=pickBoneHandle(e.clientX,e.clientY);});window.addEventListener('pointerup',()=>{if(!draggingHandle)return;pushHistory(draggingHandle.dragStartState);draggingHandle=null;controls.enabled=true;});const exportProgressWrap=document.getElementById('exportProgressWrap');const exportProgressBar=document.getElementById('exportProgressBar');const exportStatusEl=document.getElementById('exportStatus');function setExportStatus(msg){exportStatusEl.textContent=msg;}
+hoveredHandle=pickBoneHandle(e.clientX,e.clientY);});const endHandleDrag=()=>{if(!draggingHandle)return;const st=draggingHandle.dragStartState;draggingHandle=null;controls.enabled=true;pushHistoryIfChanged(st);};window.addEventListener('pointerup',endHandleDrag);window.addEventListener('pointercancel',endHandleDrag);const exportProgressWrap=document.getElementById('exportProgressWrap');const exportProgressBar=document.getElementById('exportProgressBar');const exportStatusEl=document.getElementById('exportStatus');function setExportStatus(msg){exportStatusEl.textContent=msg;}
 function setExportProgress(pct,show){exportProgressWrap.classList.toggle('show',!!show);exportProgressBar.style.width=Math.max(0,Math.min(100,pct))+'%';}
 let previewMesh=null;let previewActive=false;function exitPreview(){previewActive=false;}
 async function downloadCanvasPng(canvas,filename){return new Promise((resolve,reject)=>{let finished=false;const succeed=(url)=>{if(finished)return;finished=true;try{downloadDataUrl(url,filename);resolve(true);}catch(err){reject(err);}};try{canvas.toBlob((blob)=>{if(blob){const url=URL.createObjectURL(blob);succeed(url);setTimeout(()=>URL.revokeObjectURL(url),2000);return;}
@@ -5850,7 +5862,38 @@ function hSet(el,v){
   }else{
     if(String(el.value)===v)return;el.value=v;}
   hFire(el,'input');hFire(el,'change');}
-function hHasPending(){for(var k in trackers){var t=trackers[k];if(t.timer||t.pending)return true;}return false;}
+/* ---- トグルボタン(案1) ----
+ * ボタンの class / aria-pressed 等がクリックで変わったら履歴に積み、アンドゥ時はそのボタンをクリックし直して戻す。
+ * 押した瞬間だけ付く押下エフェクト用クラスを拾わないよう、少し待って状態が安定してから記録する。 */
+var BTN_SEL='button,[role=button],[role=switch],[role=tab],[role=radio],[role=checkbox]';
+var BTN_ATTRS=['aria-pressed','aria-checked','aria-selected','aria-expanded','data-state','data-active','data-on'];
+function hBtns(host){return Array.prototype.slice.call(host.querySelectorAll(BTN_SEL));}
+function hBSig(el){var a=(el.getAttribute('class')||'').split(/\s+/).filter(Boolean).sort().join(' ');
+  BTN_ATTRS.forEach(function(n){var v=el.getAttribute(n);if(v!==null)a+='|'+n+'='+v;});
+  return{a:a,t:(el.textContent||'').trim().slice(0,40)};}
+function hBSnap(host){var m=new Map();hBtns(host).forEach(function(el){m.set(el,hBSig(el));});return m;}
+function hBtnDiff(t){var cur=hBtns(t.host),ch=[];
+  cur.forEach(function(el,i){var b=t.bbase.get(el);if(!b)return;var n=hBSig(el);
+    if(b.a!==n.a||(el===t.clicked&&b.t!==n.t))ch.push({el:el,idx:i,before:b,after:n});});
+  return ch;}
+function hRecordBtns(t,ch){
+  t.bbase=hBSnap(t.host);t.clicked=null;if(!ch.length)return;
+  hUndo.push({id:t.id,changes:[],btns:ch,seq:seqSrc.next()});
+  if(hUndo.length>H_LIMIT)hUndo.shift();
+  hRedo.length=0;hNotify(true);}
+function hCommitBtns(t,final){
+  if(t.btimer){clearTimeout(t.btimer);t.btimer=0;}
+  if(hApplying)return;
+  var ch=hBtnDiff(t);
+  if(!ch.length){t.bbase=hBSnap(t.host);t.clicked=null;return;}
+  if(!final){
+    t.btimer=setTimeout(function(){t.btimer=0;
+      var ch2=hBtnDiff(t).filter(function(c){return ch.some(function(o){return o.el===c.el&&o.after.a===c.after.a&&(o.el!==t.clicked||o.after.t===c.after.t);});});
+      hRecordBtns(t,ch2);},300);
+    return;}
+  hRecordBtns(t,ch);}
+function hBMatch(now,want,c){return now.a===want.a&&(c.before.a!==c.after.a||now.t===want.t);}
+function hHasPending(){for(var k in trackers){var t=trackers[k];if(t.timer||t.pending||t.btimer)return true;}return false;}
 function hCommit(t,force){
   if(!t||hApplying)return;
   if(t.timer){clearTimeout(t.timer);t.timer=0;}
@@ -5869,13 +5912,15 @@ function hCommit(t,force){
   hNotify(true);}
 function hTrack(id,host){
   hUntrack(id);
-  var t={id:id,host:host,base:hSnap(host),timer:0,pending:false,dragging:false};trackers[id]=t;
+  var t={id:id,host:host,base:hSnap(host),bbase:hBSnap(host),btimer:0,clicked:null,timer:0,pending:false,dragging:false};trackers[id]=t;
   function arm(ms){if(t.timer)clearTimeout(t.timer);t.timer=setTimeout(function(){t.timer=0;hCommit(t,false);},ms);}
   function onDown(e){
     if(hApplying)return;
     if(t.timer)hCommit(t,true); /* 直前のボタン操作などが未記録ならここで確定 */
+    if(t.btimer)hCommitBtns(t,true);
     if(e.type==='pointerdown'&&e.target&&(e.target.type||'').toLowerCase()==='range')t.dragging=true;
-    if(!t.pending)t.base=hSnap(host);} /* 操作の直前の値を基準にする */
+    if(!t.pending)t.base=hSnap(host);
+    if(!t.btimer)t.bbase=hBSnap(host);} /* 操作の直前の値を基準にする */
   host.addEventListener('pointerdown',onDown,true);
   host.addEventListener('keydown',onDown,true);
   host.addEventListener('input',function(e){
@@ -5888,11 +5933,13 @@ function hTrack(id,host){
     setTimeout(function(){hCommit(t,true);},0);},true); /* プラグイン側の処理が終わってから確定 */
   host.addEventListener('click',function(e){
     if(hApplying||!e.isTrusted)return;
-    arm(200);},true); /* 「リセット」など、ボタンがプログラムから値を変える操作も拾う */
+    arm(200);
+    var b=e.target&&e.target.closest?e.target.closest(BTN_SEL):null;
+    if(b&&host.contains(b)){t.clicked=b;if(t.btimer){clearTimeout(t.btimer);t.btimer=0;}t.btimer=setTimeout(function(){t.btimer=0;hCommitBtns(t,false);},250);}},true); /* 「リセット」など、ボタンがプログラムから値を変える操作も拾う */
   return t;}
 function hUntrack(id){
   if(!trackers[id])return;
-  if(trackers[id].timer)clearTimeout(trackers[id].timer);
+  if(trackers[id].timer)clearTimeout(trackers[id].timer);if(trackers[id].btimer)clearTimeout(trackers[id].btimer);
   delete trackers[id];
   var n=hUndo.length+hRedo.length;
   hUndo=hUndo.filter(function(e){return e.id!==id;});
@@ -5903,7 +5950,7 @@ function hRelease(){
     if(t.pending||t.timer)setTimeout(function(){hCommit(t,false);},0);});}
 document.addEventListener('pointerup',hRelease,true);
 document.addEventListener('pointercancel',hRelease,true);
-function hCommitAll(){Object.keys(trackers).forEach(function(k){var t=trackers[k];if(t.timer||t.pending)hCommit(t,true);});}
+function hCommitAll(){Object.keys(trackers).forEach(function(k){var t=trackers[k];if(t.timer||t.pending)hCommit(t,true);if(t.btimer)hCommitBtns(t,true);});}
 function hApply(e,dir){
   var t=trackers[e.id];if(!t)return false;
   var cur=hCtls(t.host);hApplying=true;
@@ -5913,7 +5960,16 @@ function hApply(e,dir){
     hSet(el,dir==='before'?c.before:c.after);});}
   catch(err){console.warn(err);}
   finally{hApplying=false;}
-  t.base=hSnap(t.host);t.pending=false;return true;}
+  hApplying=true;
+  try{(e.btns||[]).forEach(function(c){
+    var el=c.el;if(!el||!t.host.contains(el))el=hBtns(t.host)[c.idx];
+    if(!el||el.disabled)return;c.el=el;
+    var want=dir==='before'?c.before:c.after;
+    if(hBMatch(hBSig(el),want,c))return; /* すでに目的の状態 */
+    el.click(); /* トグルをもう一度押して戻す */});}
+  catch(err){console.warn(err);}
+  finally{hApplying=false;}
+  t.base=hSnap(t.host);t.bbase=hBSnap(t.host);t.pending=false;return true;}
 function hUndoOne(){
   hCommitAll();
   while(hUndo.length){var e=hUndo.pop();if(hApply(e,'before')){hRedo.push(e);hNotify(false);return true;}}
